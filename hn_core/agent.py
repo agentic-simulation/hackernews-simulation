@@ -5,13 +5,13 @@ class Agent:
                  model: str = "gpt-4o-mini", 
                  temperature: float = 0.5, 
                  bio: str = "", 
-                 p: float = 0.5):
+                 activation_probability: float = 0.5):
         
         self.bio = bio
         self.model = model
         self.temperature = temperature
         self.memory = []
-        self.p = p
+        self.activation_probability = activation_probability
 
         # Load agent prompt template
         with open("hn_core/prompts/agent_prompt_template.txt", "r") as f:

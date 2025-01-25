@@ -26,7 +26,7 @@ if __name__ == "__main__":
             model="gpt-4o-mini",
             temperature=0.5,
             bio=persona["bio"],
-            p=persona["p"],
+            activation_probability=persona["activation_probability"],
         )
         agents.append(agent)
 
