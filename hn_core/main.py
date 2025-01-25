@@ -33,7 +33,7 @@ if __name__ == "__main__":
     # TODO: we migth want to run the environment multiple times and average the results
     # Run the environment
     environment = Environment(
-        total_time_steps=10,
+        total_time_steps=24, # 24 hours
         agents=agents,
         post=post,
     )
