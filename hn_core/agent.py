@@ -31,6 +31,9 @@ class Agent:
         # TODO: Create the messages to send to the LLM
 
         # TODO: Send the messages to the LLM and return the response 
+        # We can simply ask the LLM to respond in a structured format (i.e JSON), or
+        # we can ask the LLM to utilize tools and the output of those tools would for instance increase the upvotes of the post, or add a comment to the post.
+        # A very important action is the one of being able to browse the url of the post (if any) and extract information from it that could influence the agent's response (i.e. upvote, comment, etc.)
 
         # TODO: Parse the response and collect the actions in a structured format 
         # (i.e. list of dictionaries like [{'upvote': True, 'comment': 'This is a great post!'}, {'upvote': False, 'comment': None}, ...])

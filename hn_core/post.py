@@ -14,8 +14,21 @@ class Post:
         self.rank = self.calculate_rank()
 
     def calculate_rank(self, gravity=1.8):
+        # TODO: Implement the modifiers
+        # TYPE_PENALTY = 0.8 -> Penalty for non-story/poll content
+        # NO_URL_PENALTY = 0.4 -> Penalty for posts without a URL
+        # SEVERITY_PENALTY = 0.001 -> Penalty for posts with buried content
+        # LIGHTWEIGHT_PENALTY = 0.17 -> Penalty for lightweight content
+        # GAG_PENALTY = 0.1 -> Penalty for gagged content
+        # rank = (base_score / time_decay) * modifiers
+        # base_score = (score - 1)^0.8 if (score > 1) else (score - 1)
+        # time_decay = time_since_posted + 2 (in hours)
+
+        # TODO: Implement the modifiers
+        # For now, we will just use the base score but we will need to implement the modifiers
+        
         time_since_posted = (datetime.datetime.now() - self.time_posted).total_seconds() / 3600
-        rank = (self.upvotes - 1) / (time_since_posted + 1) ** gravity
+        rank = (self.upvotes - 1) / (time_since_posted + 2) ** gravity
         return rank
 
     def update(self, actions):
