@@ -26,7 +26,7 @@ class Post:
 
         # TODO: Implement the modifiers
         # For now, we will just use the base score but we will need to implement the modifiers
-        
+
         time_since_posted = (datetime.datetime.now() - self.time_posted).total_seconds() / 3600
         rank = (self.upvotes - 1) / (time_since_posted + 2) ** gravity
         return rank
@@ -43,6 +43,7 @@ class Post:
 
         # TODO: if action is comment, append comment to self.comments (i.e. self.comments.append(action['comment'])) 
         # Comments could eventually have nested comments, so we will need to handle that
+        # Comment could also have a score/rank, so we will need to handle that
 
         # TODO: Recalculate rank after updates (i.e. self.rank = self.calculate_rank())
 
