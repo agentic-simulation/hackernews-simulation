@@ -30,6 +30,7 @@ if __name__ == "__main__":
         )
         agents.append(agent)
 
+    # TODO: we migth want to run the environment multiple times and average the results
     # Run the environment
     environment = Environment(
         total_time_steps=10,
