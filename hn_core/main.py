@@ -21,12 +21,13 @@ if __name__ == "__main__":
         personas = [json.loads(line) for line in f]
     
     agents = []
+    activation_probability = 0.5 # between 0 and 1
     for persona in personas:
         agent = Agent(
             model="gpt-4o-mini",
             temperature=0.5,
             bio=persona["bio"],
-            activation_probability=persona["activation_probability"],
+            activation_probability=activation_probability,
         )
         agents.append(agent)
 
