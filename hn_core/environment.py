@@ -18,6 +18,8 @@ class Environment:
         for time_step in range(self.total_time_steps):
             random.shuffle(self.agents)
             for agent in self.agents:
-                if agent.activation_probability >= random.random(): # TODO: Agents could also be activated based on the post rank and some randomness (i.e. agent.p >= weight * self.post.rank)
-                    actions = agent.run(self.post)
-                    self.post.update(actions)
+                if agent.is_active: 
+                    if agent.activation_probability >= random.random(): # TODO: Agents could also be activated based on the post rank and some randomness (i.e. agent.p >= weight * self.post.rank)
+                        actions = agent.run(self.post)
+                        agent.is_active = False
+                        self.post.update(actions)

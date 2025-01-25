@@ -13,6 +13,8 @@ class Agent:
         self.memory = []
         self.activation_probability = activation_probability
 
+        self.is_active = True
+
         # Load agent prompt template
         with open("hn_core/prompts/agent_prompt_template.txt", "r") as f:
             self.prompt_template = f.read()
