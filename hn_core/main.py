@@ -22,10 +22,7 @@ def handler(obj):
         return obj.isoformat()
     if isinstance(obj, set):
         return list(obj)
-    from hn_core.core.constants import AgentAction
 
-    # if isinstance(obj, AgentAction):
-    #     return obj.value
     raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
 
