@@ -1,11 +1,17 @@
 import datetime
 from typing import Dict, Optional
 
-from hn_core.agent import AgentAction
+from core.constants import AgentAction
+from hn_core.model.agent_model import Action
 
 
 class Post:
-    def __init__(self, title, url, text):
+    def __init__(
+        self,
+        title: str,
+        url: str,
+        text: str,
+    ):
         # Static attributes
         self.title = title
         self.url = url
@@ -58,42 +64,42 @@ class Post:
 
         return rank
 
-    def update(self, actions: Dict):
+    def update(self, action: Action):
         """Update post based on agent actions"""
-        if not actions:
+        if not action:
             return
 
         # Record the action with timestamp
         timestamp = datetime.datetime.now()
-        action = actions.get("action")
+        action_val = action.action.value
 
         # Update stats based on action type
-        if action == AgentAction.UPVOTE.value:
+        if action_val == AgentAction.UPVOTE.value:
             self.interaction_stats["upvotes"] += 1
             self.upvotes += 1  # Update legacy upvotes counter
-        elif action == AgentAction.DOWNVOTE.value:
+        elif action_val == AgentAction.DOWNVOTE.value:
             self.interaction_stats["downvotes"] += 1
-        elif action == AgentAction.FAVORITE.value:
+        elif action_val == AgentAction.FAVORITE.value:
             self.interaction_stats["favorites"] += 1
-        elif action == AgentAction.CREATE_COMMENT.value:
+        elif action_val == AgentAction.CREATE_COMMENT.value:
             comment_id = len(self.interaction_stats["comments"])
             comment = {
                 "id": comment_id,
-                "text": actions.get("comment_text"),
+                "text": action.comment_text,
                 "timestamp": timestamp,
                 "upvotes": 0,
                 "downvotes": 0,
             }
             self.interaction_stats["comments"].append(comment)
             self.comments.append(comment)  # Update legacy comments list
-        elif action == AgentAction.UPVOTE_COMMENT.value:
-            comment_id = actions.get("comment_id")
+        elif action_val == AgentAction.UPVOTE_COMMENT.value:
+            comment_id = action.comment_id
             if comment_id is not None:
                 self.interaction_stats["comment_upvotes"][comment_id] = (
                     self.interaction_stats["comment_upvotes"].get(comment_id, 0) + 1
                 )
-        elif action == AgentAction.DOWNVOTE_COMMENT.value:
-            comment_id = actions.get("comment_id")
+        elif action_val == AgentAction.DOWNVOTE_COMMENT.value:
+            comment_id = action.comment_id
             if comment_id is not None:
                 self.interaction_stats["comment_downvotes"][comment_id] = (
                     self.interaction_stats["comment_downvotes"].get(comment_id, 0) + 1
@@ -102,12 +108,10 @@ class Post:
         # Record interaction in history
         interaction_record = {
             "timestamp": timestamp.isoformat(),
-            "action": action,
-            "agent_id": id(
-                actions.get("agent", None)
-            ),  # Track which agent performed the action
-            "comment_id": actions.get("comment_id"),
-            "comment_text": actions.get("comment_text"),
+            "action": action_val,
+            "agent_id": action.agent_id,
+            "comment_id": action.comment_id,
+            "comment_text": action.comment_text,
         }
         self.interaction_stats["interaction_history"].append(interaction_record)
 

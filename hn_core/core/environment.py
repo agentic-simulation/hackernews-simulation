@@ -1,7 +1,9 @@
 import random
 from typing import List
-from hn_core.agent import Agent
-from hn_core.post import Post
+
+from core.agent import Agent
+from core.post import Post
+
 
 class Environment:
     def __init__(self, total_time_steps: int, agents: List[Agent], post: Post):
@@ -23,20 +25,22 @@ class Environment:
             # Each hour, go through agents in sequence
             for agent_idx in range(len(self.agents)):
                 agent = self.agents[agent_idx]
-                
+
                 # Check if agent should be activated
                 if agent.is_active and agent.activation_probability >= random.random():
                     # Agent sees current post state and acts
-                    actions = agent.run(self.post)
-                    
+                    action = agent.run(self.post)
+
                     # Update post with agent's actions
-                    self.post.update(actions)
-                    
+                    self.post.update(action)
+
                     # Deactivate agent after interaction
                     agent.is_active = False
-                    
+
                     # Log the interaction (optional)
-                    print(f"Hour {time_step}: Agent {agent_idx} ({agent.bio}) performed action: {actions['action']}")
-                    
+                    print(
+                        f"Hour {time_step}: Agent {agent_idx} ({agent.bio}) performed action: {action.action}"
+                    )
+
             # At the end of each hour, recalculate post rank
             self.post.rank = self.post.calculate_rank()

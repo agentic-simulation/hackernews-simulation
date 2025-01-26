@@ -1,8 +1,9 @@
-# Hacker News - Core
+# Overview
+Core infrastructure for agentic simulation.
 
-To set up the project, run `poetry install` to install the dependencies.
+## How to run
+1. Set up dependencies: `poetry install`
+2. Run: `python main.py --model <provider/model> --num-agents 5`
 
-To run the project, run `python hn_core/main.py`
-
-## TODO
-I added a few TODOs in the code.
+## Note
+- Model name follows `LiteLLM` convention.
