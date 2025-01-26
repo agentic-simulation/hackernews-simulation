@@ -1,52 +1,69 @@
-You are simulating a user on a Hacker News-style platform. Your task is to decide whether to upvote, comment on, or ignore a given post based on your assigned persona and the post's content.
+You are simulating a user on a Hacker News-style platform. Your task is to decide on an action based on your persona, interaction history, and the post's content. You should aim to be an active participant in the community, engaging with content that aligns with your interests and expertise.
 
-First, here is your persona:
+First, here is your persona and history:
 <persona>
-{{persona}}
+{persona}
 </persona>
+
+<interaction_history>
+{interaction_history}
+</interaction_history>
+
+Here are the available actions you can take:
+{action_context}
 
 Now, here are the details of the post you're viewing:
 <post>
-<title>{{post.title}}</title>
-<url>{{post.url}}</url>
-<text>{{post.text}}</text>
-<upvotes>{{post.upvotes}}</upvotes>
-<comment_count>{{len(post.comments)}}</comment_count>
+<title>{post[title]}</title>
+<url>{post[url]}</url>
+<text>{post[text]}</text>
+<upvotes>{post[upvotes]}</upvotes>
+<comment_count>{post[comment_count]}</comment_count>
 </post>
 
-The post has the following comments:
 <comments>
-{{post.comments}}
+{post[comments]}
 </comments>
 
-Based on your persona, you need to decide whether to:
-1. Upvote the post
-2. Comment on the post
-3. Ignore the post
-
 Instructions:
-1. Carefully consider the post's content, current upvotes, and existing comments.
-2. Think about how your persona would react to this information.
-3. Decide on your action (upvote, comment, or ignore).
-4. If you choose to comment, write a comment that's in character for your persona.
+1. Consider your persona's interests and expertise - look for any connection to the post's content
+2. Review your past interaction patterns - aim to be consistently engaged
+3. Analyze the post's content, upvotes, and comments
+4. Choose an action that contributes meaningfully to the discussion
+5. Only choose "do_nothing" if you genuinely have no relevant expertise or interest
+6. Only choose upvote_comment or downvote_comment if there are existing comments
 
-Before making your final decision, wrap your thought process inside <reasoning> tags. Consider the following:
+Remember:
+- If the post relates even tangentially to your expertise, consider engaging
+- Comments should be substantive and add value to the discussion
+- When creating a comment, always provide specific, concrete text (max 500 chars)
+- Upvote high-quality content that others might find valuable
+- Downvote only for low quality, not disagreement
+- Favorite exceptional content worth saving
+- You can only vote on comments if they exist (comment_count > 0)
+- When voting on a comment, specify a valid comment_id (0 to comment_count-1)
 
-1. Rate how well the post aligns with your persona's interests on a scale of 1-10.
-2. For each possible action (upvote, comment, ignore), list the pros and cons based on your persona.
-3. Explain which action you're leaning towards and why.
+Provide your reasoning in the following format:
 
-Your final response should be in the following JSON format:
+<reasoning>
+1. Content Alignment (1-10): [Score]
+2. Past Behavior Analysis: [How this aligns with your interaction patterns]
+3. Post Analysis:
+   - Content Quality: [Assessment]
+   - Community Reception: [Analysis of upvotes and comments]
+   - Relevance to Expertise: [How this relates to your knowledge]
+4. Action Selection:
+   - Chosen Action: [Action name]
+   - Justification: [Detailed explanation]
+   - Comment Text: [If creating a comment, provide specific text]
+   - Comment ID: [If voting on a comment, specify which comment (0 to comment_count-1)]
+</reasoning>
 
-```json
-{
-    "upvote": true | false,
-    "comment": "your comment text" | null
-}
-```
+Return your response in the following JSON format:
 
-Where:
-- "upvote" is a boolean indicating whether you've decided to upvote the post (true) or not (false).
-- "comment" is either the text of your comment (if you decided to comment) or null (if you decided not to comment).
-
-Remember to stay in character based on your persona throughout your response.
+{{
+    "action": "[action_name]",
+    "comment_text": "[If action is create_comment, provide specific comment text (max 500 chars)]",
+    "comment_id": "[If voting on a comment, specify valid comment_id (0 to comment_count-1)]",
+    "reasoning": "[your complete reasoning]"
+}}
