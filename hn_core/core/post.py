@@ -18,102 +18,62 @@ class Post:
         self.text = text
         self.time_posted = datetime.datetime.now()
 
-        # Initialize interaction stats first
-        self.interaction_stats = {
-            "post_id": id(self),  # Unique identifier for the post
-            "timestamp": self.time_posted,
-            "upvotes": 0,
-            "downvotes": 0,
-            "comments": [],
-            "comment_upvotes": {},  # Dictionary mapping comment_id to upvotes
-            "comment_downvotes": {},  # Dictionary mapping comment_id to downvotes
-            "favorites": 0,
-            "interaction_history": [],  # List to store all interactions with timestamps
-        }
-
         # Dynamic attributes that depend on interaction_stats
-        self.upvotes = 0
+        self.upvotes = 1
         self.comments = []
-        self.rank = (
-            self.calculate_rank()
-        )  # Now safe to call since interaction_stats exists
+        self.score = 0
 
-    def calculate_rank(self, gravity: float = 1.8) -> float:
+    def _calculate_score(self, current_time, gravity: float = 1.8) -> float:
         """Calculate post rank using Hacker News ranking algorithm.
 
         Score = (P-1) / (T+2)^G
         where:
-        P = points (upvotes - downvotes)
+        P = points (upvotes)
         T = time since submission (in hours)
         G = Gravity, defaults to 1.8
 
         Returns:
             float: The calculated rank
         """
-        # Calculate points (P) as upvotes minus downvotes
-        points = self.interaction_stats["upvotes"] - self.interaction_stats["downvotes"]
+        # TODO: Implement the modifiers
+        # TYPE_PENALTY = 0.8 -> Penalty for non-story/poll content
+        # NO_URL_PENALTY = 0.4 -> Penalty for posts without a URL
+        # SEVERITY_PENALTY = 0.001 -> Penalty for posts with buried content
+        # LIGHTWEIGHT_PENALTY = 0.17 -> Penalty for lightweight content
+        # GAG_PENALTY = 0.1 -> Penalty for gagged content
+        # rank = (base_score / time_decay) * modifiers
+        # base_score = (score - 1)^0.8 if (score > 1) else (score - 1)
+        # time_decay = time_since_posted + 2 (in hours)
+
+        points = self.upvotes
 
         # Calculate time since submission in hours (T)
-        time_since_posted = (
-            datetime.datetime.now() - self.time_posted
-        ).total_seconds() / 3600
+        time_since_posted = current_time  # in hours
 
         # Apply the formula: (P-1) / (T+2)^G
         # Note: We subtract 1 from points to negate submitter's vote
-        rank = (points - 1) / pow((time_since_posted + 2), gravity)
+        score = (points - 1) / pow((time_since_posted + 2), gravity)
+        return score
 
-        return rank
-
-    def update(self, action: Action):
+    def update(
+        self,
+        action: Action,
+        current_time,
+    ):
         """Update post based on agent actions"""
         if not action:
             return
 
-        # Record the action with timestamp
         timestamp = datetime.datetime.now()
         action_val = action.action.value
 
-        # Update stats based on action type
+        # TODO: agents can take more than one comment
         if action_val == AgentAction.UPVOTE.value:
-            self.interaction_stats["upvotes"] += 1
             self.upvotes += 1  # Update legacy upvotes counter
-        elif action_val == AgentAction.DOWNVOTE.value:
-            self.interaction_stats["downvotes"] += 1
-        elif action_val == AgentAction.FAVORITE.value:
-            self.interaction_stats["favorites"] += 1
         elif action_val == AgentAction.CREATE_COMMENT.value:
-            comment_id = len(self.interaction_stats["comments"])
-            comment = {
-                "id": comment_id,
-                "text": action.comment_text,
-                "timestamp": timestamp,
-                "upvotes": 0,
-                "downvotes": 0,
-            }
-            self.interaction_stats["comments"].append(comment)
-            self.comments.append(comment)  # Update legacy comments list
-        elif action_val == AgentAction.UPVOTE_COMMENT.value:
-            comment_id = action.comment_id
-            if comment_id is not None:
-                self.interaction_stats["comment_upvotes"][comment_id] = (
-                    self.interaction_stats["comment_upvotes"].get(comment_id, 0) + 1
-                )
-        elif action_val == AgentAction.DOWNVOTE_COMMENT.value:
-            comment_id = action.comment_id
-            if comment_id is not None:
-                self.interaction_stats["comment_downvotes"][comment_id] = (
-                    self.interaction_stats["comment_downvotes"].get(comment_id, 0) + 1
-                )
+            # * Comments could eventually have nested comments, so we will need to handle that
+            # * Comments could also have a score/rank, so we will need to handle that
+            self.comments.append(action.comment_text)
 
-        # Record interaction in history
-        interaction_record = {
-            "timestamp": timestamp.isoformat(),
-            "action": action_val,
-            "agent_id": action.agent_id,
-            "comment_id": action.comment_id,
-            "comment_text": action.comment_text,
-        }
-        self.interaction_stats["interaction_history"].append(interaction_record)
-
-        # Recalculate rank after updates
-        self.rank = self.calculate_rank()
+        # TODO: properly implement score calculation
+        self.score = self._calculate_score(current_time)

@@ -43,15 +43,11 @@ def save_simulation_results(post: Post, timestamp: datetime.datetime):
             "title": post.title,
             "url": post.url,
             "text": post.text,
-            "time_posted": post.time_posted.isoformat(),
-            "final_rank": post.rank,
+            "final_score": post.score,
             "final_upvotes": post.upvotes,
-            "final_downvotes": post.interaction_stats["downvotes"],
-            "final_comments": len(post.comments),
-            "final_favorites": post.interaction_stats["favorites"],
+            "comments_count": len(post.comments),
             "comments": post.comments,
         },
-        "interaction_history": post.interaction_stats["interaction_history"],
     }
 
     # Save to file with custom serialization

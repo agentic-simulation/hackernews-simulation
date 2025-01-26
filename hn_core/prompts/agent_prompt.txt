@@ -5,10 +5,6 @@ First, here is your persona and history:
 {persona}
 </persona>
 
-<interaction_history>
-{interaction_history}
-</interaction_history>
-
 Here are the available actions you can take:
 {action_context}
 
@@ -64,6 +60,5 @@ Return your response in the following JSON format:
 {{
     "action": "[action_name]",
     "comment_text": "[If action is create_comment, provide specific comment text (max 500 chars)]",
-    "comment_id": "[If voting on a comment, specify valid comment_id (0 to comment_count-1)]",
     "reasoning": "[your complete reasoning]"
 }}

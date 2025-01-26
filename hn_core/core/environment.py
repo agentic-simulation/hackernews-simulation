@@ -17,30 +17,20 @@ class Environment:
         self.total_time_steps = total_time_steps
         self.agents = agents
         self.post = post
-        self.current_agent_idx = 0
 
     def run(self):
         """Run the simulation with sequential agent interactions."""
         for time_step in range(self.total_time_steps):
-            # Each hour, go through agents in sequence
-            for agent_idx in range(len(self.agents)):
-                agent = self.agents[agent_idx]
-
-                # Check if agent should be activated
+            # TODO: possibly shuffle order at each time step.
+            for agent in self.agents:
+                # TODO: activation should consider post score since score affects visibility of a post.
                 if agent.is_active and agent.activation_probability >= random.random():
-                    # Agent sees current post state and acts
+                    # agent sees current post state and acts
                     action = agent.run(self.post)
-
-                    # Update post with agent's actions
-                    self.post.update(action)
-
-                    # Deactivate agent after interaction
+                    # update post with agent's actions
+                    # TODO update time_step to reflect agent behavior in current time step
+                    self.post.update(action=action, current_time=time_step)
                     agent.is_active = False
-
-                    # Log the interaction (optional)
                     print(
-                        f"Hour {time_step}: Agent {agent_idx} ({agent.bio}) performed action: {action.action}"
+                        f"Hour {time_step}: Agent ({agent.bio}) performed action: {action.action}"
                     )
-
-            # At the end of each hour, recalculate post rank
-            self.post.rank = self.post.calculate_rank()

@@ -43,21 +43,11 @@ class Agent:
 
     def _add_memory(self, action: Action):
         """Store action in agent's memory with timestamp"""
-        timestamp = datetime.datetime.now().isoformat()
         action_record = ActionRecord(
-            timestamp=timestamp,
             action=action.action,
-            agent_id=action.agent_id,
-            comment_id=action.comment_id,
             reasoning=action.reasoning,
         )
         self.memory.actions.append(action_record)
-
-        # increment interaction patterns
-        action_type = action.action.value
-        self.memory.interaction_patterns[action_type] = (
-            self.memory.interaction_patterns.get(action_type, 0) + 1
-        )
 
     def _parse_model_output(self, model_output: str) -> Action:
         # Extract content between ```json and ``` markers
@@ -87,9 +77,7 @@ class Agent:
                 .replace("<reasoning>", "")
                 .replace("</reasoning>", "")
                 .strip(),
-                agent_id=self.agent_id,
-                comment_text=data.get("comment_text"),
-                comment_id=data.get("comment_id"),
+                comment_text=data.get("comment_text", None),
             )
             return extracted
         except json.JSONDecodeError as e:
@@ -104,12 +92,6 @@ class Agent:
                 f"Action: {action.value}\n"
                 f"Description: {ActionMetadata.DESCRIPTIONS[action]}\n"
                 f"Note: Only choose 'do_nothing' if you genuinely have no interest or expertise in the topic.\n"
-                + (
-                    "Note: This action requires existing comments on the post.\n"
-                    if action
-                    in [AgentAction.UPVOTE_COMMENT, AgentAction.DOWNVOTE_COMMENT]
-                    else ""
-                )
                 + (
                     "Note: When choosing this action, you MUST provide a specific comment text.\n"
                     if action == AgentAction.CREATE_COMMENT
@@ -130,7 +112,6 @@ class Agent:
         # format prompt
         prompt = self.prompt_template.format(
             persona=self.bio,
-            interaction_history=json.dumps(self.memory.interaction_patterns, indent=2),
             action_context=action_context,
             post=post_data,
         )
@@ -141,14 +122,9 @@ class Agent:
                 res = completion(
                     model=self.model,
                     messages=[{"role": "user", "content": prompt}],
+                    **self.model_params,
                 )
-                if not res or not res.choices:
-                    raise ValueError("Empty response from model")
-
                 parsed = self._parse_model_output(res.choices[0].message.content)
-                if not parsed:
-                    raise ValueError("Failed to parse model output")
-
                 # update memory with new action
                 self._add_memory(parsed)
                 return parsed
@@ -162,9 +138,7 @@ class Agent:
         return Action(
             action=AgentAction.DO_NOTHING,
             reasoning=f"Failed to generate output from LLM after {self.max_retries} attempts. Error: {str(last_error)}",
-            agent_id=self.agent_id,
             comment_text=None,
-            comment_id=None,
         )
 
     def run(self, post: Post) -> Action:
