@@ -2,16 +2,19 @@ import json
 import logging
 import os
 import re
+import time
 from typing import Dict, Optional
 
 from hn_core.core.constants import ActionFormat
 from hn_core.core.post import Post
-from litellm import completion
+import litellm
+from litellm import completion, RateLimitError
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
+litellm.suppress_debug_info = True
 
 class Agent:
     def __init__(
@@ -35,23 +38,27 @@ class Agent:
 
     def _parse_model_output(self, model_output: str) -> Dict:
         """Parse the model output into a response format dictionary"""
-        json_pattern = r"```json(.*?)```"
-        match = re.search(json_pattern, model_output, re.DOTALL)
-
-        if not match:
-            logging.info("Error: Could not find JSON content between ```json and ``` markers")
-            return ActionFormat.DEFAULT_ACTION
-
-        json_str = match.group(1).strip()
         try:
-            data = json.loads(json_str)
-            if not ActionFormat.validate(data):
-                logging.error(f"Invalid response format: {data}")
-                return ActionFormat.DEFAULT_ACTION
-            return data
-        except json.JSONDecodeError as e:
-            logging.error(f"Error parsing JSON: {str(e)}")
-            return ActionFormat.DEFAULT_ACTION
+            json_pattern = r"```json(.*?)```"
+            match = re.search(json_pattern, model_output, re.DOTALL)
+
+            if not match:
+                logging.info("Error: Could not find JSON content between ```json and ``` markers")
+                raise ValueError("Error: Could not find JSON content between ```json and ``` markers")
+
+            json_str = match.group(1).strip()
+            try:
+                data = json.loads(json_str)
+                if not ActionFormat.validate(data):
+                    logging.error(f"Invalid response format: {data}")
+                    raise ValueError(f"Invalid response format: {data}")
+                return data
+            except json.JSONDecodeError as e:
+                logging.error(f"Error parsing JSON: {str(e)}")
+                raise ValueError(f"Error parsing JSON: {str(e)}")
+        except Exception as e:
+            logging.error(f"Unexpected error parsing model output: {str(e)}")
+            raise ValueError(f"Unexpected error parsing model output: {str(e)}")
 
     def _get_agent_response(self, post: Post) -> Dict:
         """Generate agent response based on persona and post content"""
@@ -81,8 +88,10 @@ class Agent:
         )
 
         last_error = None
-        max_retries = 3
-        for attempt in range(max_retries):
+        max_retries = 5
+        attempt = 0
+        ratelimit_attempt = 0
+        while attempt < max_retries:
             try:
                 res = completion(
                     model=self.model,
@@ -93,8 +102,16 @@ class Agent:
                 return action
 
             except Exception as e:
+                if isinstance(e, RateLimitError):
+                    backoff = min(2 ** ratelimit_attempt + 5, 30)  # Cap at 30 seconds
+                    logging.warning(f"Rate limit error encountered, retrying after {backoff}s")
+                    time.sleep(backoff)
+                    ratelimit_attempt += 1
+                    continue
+                
                 logging.error(f"Unexpected error on attempt {attempt + 1}: {str(e)}")
                 last_error = e
+                attempt += 1
 
         logging.error(f"All retry attempts failed. Last error: {str(last_error)}")
         return ActionFormat.DEFAULT_ACTION
