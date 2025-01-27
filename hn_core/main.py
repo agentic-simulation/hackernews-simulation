@@ -4,10 +4,10 @@ import logging
 import os
 
 import fire
+from dotenv import load_dotenv
 from hn_core.core.agent import Agent
 from hn_core.core.environment import Environment
 from hn_core.core.post import Post
-from dotenv import load_dotenv
 
 # Set up logging
 logging.basicConfig(
@@ -63,9 +63,12 @@ def run(model: str, num_agents: int = None):
 
     # create post
     post = Post(
-        title="Building a Developer-First SaaS: From Zero to Production",
-        url="https://www.example.com",
-        text="A technical deep-dive into building a SaaS startup, covering architecture decisions, tech stack choices (Rust vs Go for backend, React vs Svelte for frontend), CI/CD pipeline setup, and how we achieved sub-100ms API response times while keeping infrastructure costs under $100/month. Includes code samples and performance benchmarks.",
+        title="Show HN: I Created ErisForge, a Python Library for Abliteration of LLMs",
+        url="https://github.com/Tsadoq/ErisForge",
+        text="""
+        ErisForge is a Python library designed to modify Large Language Models (LLMs) by applying transformations to their internal layers. Named after Eris, the goddess of strife and discord, ErisForge allows you to alter model behavior in a controlled manner, creating both ablated and augmented versions of LLMs that respond differently to specific types of input.
+        It is also quite useful to perform studies on propaganda and bias in LLMs (planning to experiment with deepseek).
+        Features - Modify internal layers of LLMs to produce altered behaviors. - Ablate or enhance model responses with the AblationDecoderLayer and AdditionDecoderLayer classes. - Measure refusal expressions in model responses using the ExpressionRefusalScorer. - Supports custom behavior directions for applying specific types of transformations.""",
     )
 
     logging.info(f"Loading personas...")
