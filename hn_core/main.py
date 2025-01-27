@@ -2,12 +2,11 @@ import datetime
 import json
 import logging
 import os
-import sys
 
 import fire
-from core.agent import Agent
-from core.environment import Environment
-from core.post import Post
+from hn_core.core.agent import Agent
+from hn_core.core.environment import Environment
+from hn_core.core.post import Post
 from dotenv import load_dotenv
 
 # Set up logging

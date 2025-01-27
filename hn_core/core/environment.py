@@ -1,8 +1,8 @@
 import random
 from typing import List
 
-from core.agent import Agent
-from core.post import Post
+from hn_core.core.agent import Agent
+from hn_core.core.post import Post
 
 
 class Environment:
@@ -21,7 +21,7 @@ class Environment:
     def run(self):
         """Run the simulation with sequential agent interactions."""
         for time_step in range(self.total_time_steps):
-            # TODO: possibly shuffle order at each time step.
+            random.shuffle(self.agents)
             for agent in self.agents:
                 # TODO: activation should consider post score since score affects visibility of a post.
                 if agent.is_active and agent.activation_probability >= random.random():
@@ -32,5 +32,5 @@ class Environment:
                     self.post.update(action=action, current_time=time_step)
                     agent.is_active = False
                     print(
-                        f"Hour {time_step}: Agent ({agent.bio}) performed action: {action.action}"
+                        f"Hour {time_step}: Agent ({agent.bio}) performed action: {action}"
                     )

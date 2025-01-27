@@ -1,8 +1,6 @@
 import datetime
-from typing import Dict, Optional
 
-from core.constants import AgentAction
-from hn_core.model.agent_model import Action
+from hn_core.core.constants import ActionFormat
 
 
 class Post:
@@ -19,7 +17,7 @@ class Post:
         self.time_posted = datetime.datetime.now()
 
         # Dynamic attributes that depend on interaction_stats
-        self.upvotes = 1
+        self.upvotes = 1 # Always start with 1 upvote
         self.comments = []
         self.score = 0
 
@@ -57,23 +55,23 @@ class Post:
 
     def update(
         self,
-        action: Action,
+        action: ActionFormat,
         current_time,
     ):
         """Update post based on agent actions"""
         if not action:
             return
 
-        timestamp = datetime.datetime.now()
-        action_val = action.action.value
+        # Check for upvote action
+        if action.get(ActionFormat.UPVOTE):
+            self.upvotes += 1
 
-        # TODO: agents can take more than one comment
-        if action_val == AgentAction.UPVOTE.value:
-            self.upvotes += 1  # Update legacy upvotes counter
-        elif action_val == AgentAction.CREATE_COMMENT.value:
-            # * Comments could eventually have nested comments, so we will need to handle that
-            # * Comments could also have a score/rank, so we will need to handle that
-            self.comments.append(action.comment_text)
+        # Check for comment action
+        comment_text = action.get(ActionFormat.COMMENT)
+        # * Comments could eventually have nested comments, so we will need to handle that
+        # * Comments could also have a score/rank, so we will need to handle that
+        if comment_text:
+            self.comments.append(comment_text)
 
-        # TODO: properly implement score calculation
+        # Update score
         self.score = self._calculate_score(current_time)

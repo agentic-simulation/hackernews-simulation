@@ -1,20 +1,29 @@
-from enum import Enum
-
-
-class AgentAction(Enum):
-    DO_NOTHING = "do_nothing"
-    UPVOTE = "upvote"
-    CREATE_COMMENT = "create_comment"
-
-
-class ActionMetadata:
+class ActionFormat:
+    """Defines the expected format and schema for agent responses"""
+    
+    # Action responses
+    UPVOTE = "upvote"  # Type: bool | None
+    COMMENT = "comment"  # Type: str | None
+    
+    # Documentation for each field
     DESCRIPTIONS = {
-        AgentAction.DO_NOTHING: "Return when indifferent about the post's content. Use when the content doesn't align with interests or expertise.",
-        AgentAction.UPVOTE: "Return when the post's content is valuable and worth promoting. Use when the content is high-quality and relevant.",
-        AgentAction.CREATE_COMMENT: "Return when having a meaningful contribution or perspective to share. Include comment text.",
+        UPVOTE: "Indicating whether to upvote the post. `true` to upvote, `null` to take no action.",
+        COMMENT: "String containing comment text to post. `null` if no comment should be made.",
     }
 
+    # Type hints for each field
+    TYPE_HINTS = {
+        UPVOTE: "<bool|null>",
+        COMMENT: "<string|null>",
+    }
 
-# class ResponseFormat:
-#     # UPVOTE_ACTION -> true | null; desc: lorem ipsum
-#     # COMMENT_ACTION -> "lorem" | null; desc:
+    @classmethod
+    def validate(cls, response: dict) -> bool:
+        """Validates that a response matches the expected format"""
+        valid_keys = {cls.UPVOTE, cls.COMMENT}
+        return (
+            isinstance(response, dict) 
+            and set(response.keys()).issubset(valid_keys)
+            and (response.get(cls.UPVOTE) is None or isinstance(response.get(cls.UPVOTE), bool))
+            and (response.get(cls.COMMENT) is None or isinstance(response.get(cls.COMMENT), str))
+        )
