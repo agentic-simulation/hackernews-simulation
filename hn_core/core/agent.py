@@ -40,18 +40,18 @@ class Agent:
 
         if not match:
             logging.info("Error: Could not find JSON content between ```json and ``` markers")
-            return None
+            return ActionFormat.DEFAULT_ACTION
 
         json_str = match.group(1).strip()
         try:
             data = json.loads(json_str)
             if not ActionFormat.validate(data):
                 logging.error(f"Invalid response format: {data}")
-                return None
+                return ActionFormat.DEFAULT_ACTION
             return data
         except json.JSONDecodeError as e:
             logging.error(f"Error parsing JSON: {str(e)}")
-            return None
+            return ActionFormat.DEFAULT_ACTION
 
     def _get_agent_response(self, post: Post) -> Dict:
         """Generate agent response based on persona and post content"""
@@ -89,19 +89,19 @@ class Agent:
                     messages=[{"role": "user", "content": prompt}],
                     **self.model_params,
                 )
-                actions = self._parse_model_output(res.choices[0].message.content)
-                return actions
+                action = self._parse_model_output(res.choices[0].message.content)
+                return action
 
             except Exception as e:
                 logging.error(f"Unexpected error on attempt {attempt + 1}: {str(e)}")
                 last_error = e
 
         logging.error(f"All retry attempts failed. Last error: {str(last_error)}")
-        return None
+        return ActionFormat.DEFAULT_ACTION
 
     def run(self, post: Post) -> Dict:
         """Main execution method for the agent"""
         if not self.is_active:
-            return None
+            return ActionFormat.DEFAULT_ACTION
 
         return self._get_agent_response(post)

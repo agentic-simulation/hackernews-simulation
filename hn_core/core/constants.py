@@ -4,6 +4,7 @@ class ActionFormat:
     # Action responses
     UPVOTE = "upvote"  # Type: bool | None
     COMMENT = "comment"  # Type: str | None
+    # VIEW_URL = "view_url"  # Type: bool | None
     
     # Documentation for each field
     DESCRIPTIONS = {
@@ -15,6 +16,12 @@ class ActionFormat:
     TYPE_HINTS = {
         UPVOTE: "<bool|null>",
         COMMENT: "<string|null>",
+    }
+
+    # Default action when parsing/processing fails
+    DEFAULT_ACTION = {
+        UPVOTE: None,
+        COMMENT: None,
     }
 
     @classmethod

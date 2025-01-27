@@ -107,7 +107,7 @@ def run(model: str, num_agents: int = None):
         agent = Agent(
             model=model,
             bio=persona["bio"],
-            activation_probability=0.5,
+            activation_probability=0.3,
             model_params={"temperature": 1.0},
         )
         agents.append(agent)
