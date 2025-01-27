@@ -2,12 +2,11 @@ import datetime
 import json
 import logging
 import os
-import sys
 
 import fire
-from core.agent import Agent
-from core.environment import Environment
-from core.post import Post
+from hn_core.core.agent import Agent
+from hn_core.core.environment import Environment
+from hn_core.core.post import Post
 from dotenv import load_dotenv
 
 # Set up logging
@@ -108,7 +107,7 @@ def run(model: str, num_agents: int = None):
         agent = Agent(
             model=model,
             bio=persona["bio"],
-            activation_probability=0.5,
+            activation_probability=0.3,
             model_params={"temperature": 1.0},
         )
         agents.append(agent)
