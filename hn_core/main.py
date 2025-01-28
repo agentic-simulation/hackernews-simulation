@@ -8,59 +8,13 @@ from dotenv import load_dotenv
 from hn_core.core.agent import Agent
 from hn_core.core.environment import Environment
 from hn_core.core.post import Post
+from hn_core.utils import save_simulation_results, load_personas
 
 # Set up logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-
-def handler(obj):
-    """convert objects compatible with json"""
-    if isinstance(obj, (datetime.datetime, datetime.date)):
-        return obj.isoformat()
-    if isinstance(obj, set):
-        return list(obj)
-
-    raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
-
-
-def save_simulation_results(environment: Environment, timestamp: datetime.datetime):
-    """Save simulation results to two JSON files in the Results directory."""
-    results_dir = "./results"
-    os.makedirs(results_dir, exist_ok=True)
-
-    timestamp_str = timestamp.strftime('%Y%m%d_%H%M%S')
-    
-    # Save agent actions
-    actions_filepath = os.path.join(results_dir, f"{timestamp_str}_agent_actions.json")
-    with open(actions_filepath, "w") as f:
-        json.dump(environment.agent_actions, f, indent=2, default=handler)
-
-    # Save post history
-    post_filepath = os.path.join(results_dir, f"{timestamp_str}_post_history.json")
-    
-    # Post metadata
-    metadata = {
-        "post_title": environment.post.title,
-        "post_url": environment.post.url,
-        "post_text": environment.post.text
-    }
-    
-    # Create post history records
-    post_history = []
-    for step, state in enumerate(environment.post.history):
-        record = {
-            "sim_step": step,
-            **metadata,
-            "upvotes": state["upvotes"],
-            "comments": state["comments"],
-            "score": state["score"]
-        }
-        post_history.append(record)
-    
-    with open(post_filepath, "w") as f:
-        json.dump(post_history, f, indent=2, default=handler)
 
 
 def run(model: str, num_agents: int = None, total_time_steps: int = 24, batch_size: int = 10):
@@ -79,27 +33,9 @@ def run(model: str, num_agents: int = None, total_time_steps: int = 24, batch_si
     )
 
     logging.info(f"Loading personas...")
-    personas_path = os.path.join(os.path.dirname(__file__), "personas.jsonl")
+    personas_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "personas_data/500_v1.jsonl")
 
-    # load personas
-    try:
-        with open(personas_path, "r") as f:
-            personas = []
-            for line in f:
-                line = line.strip()
-                if line:
-                    try:
-                        persona = json.loads(line)
-                        personas.append(persona)
-                    except json.JSONDecodeError as e:
-                        logging.error(
-                            f"Error parsing persona line: {line}, error: {str(e)}"
-                        )
-
-            if not personas:
-                raise ValueError("No valid personas found in file")
-    except Exception as e:
-        raise Exception(f"error loading personas: {str(e)}")
+    personas = load_personas(personas_path)
 
     # limit number of personas
     if num_agents is not None:
@@ -117,7 +53,7 @@ def run(model: str, num_agents: int = None, total_time_steps: int = 24, batch_si
         agent = Agent(
             model=model,
             bio=persona["bio"],
-            activation_probability=0.3,
+            activation_probability=0.8,
             model_params={"temperature": 1.0},
         )
         agents.append(agent)
@@ -129,7 +65,10 @@ def run(model: str, num_agents: int = None, total_time_steps: int = 24, batch_si
         agents=agents,
         post=post,
     )
-    environment.run(batch_size)
+
+    k = 0.1
+    threshold = 5
+    environment.run(batch_size, k, threshold)
 
     # Save results
     save_simulation_results(environment, simulation_start)

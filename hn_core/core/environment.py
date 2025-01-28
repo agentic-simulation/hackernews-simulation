@@ -1,5 +1,5 @@
 import random
-import time
+import math
 from typing import List
 from concurrent.futures import ThreadPoolExecutor
 
@@ -21,7 +21,7 @@ class Environment:
         self.post = post
         self.agent_actions = []
 
-    def run(self, batch_size: int = 20):
+    def run(self, batch_size: int = 20, k: float = 0.1, threshold: float = 5):
         """Run the simulation with sequential or parallel agent interactions.
         
         Args:
@@ -40,15 +40,35 @@ class Environment:
                 # Process each agent in parallel
                 with ThreadPoolExecutor(max_workers=batch_size) as executor:
                     executor.map(
-                        lambda agent: self._process_agent(agent, time_step),
+                        lambda agent: self._process_agent(agent, time_step, k, threshold),
                         batch
                     )
             self.post.record_history()
 
-    def _process_agent(self, agent: Agent, time_step: int):
-        """Process a single agent's interaction with the post."""
-        # TODO: activation should consider post score since score affects visibility of a post.
-        if agent.is_active and agent.activation_probability >= random.random():
+    def _process_agent(self, agent: Agent, time_step: int, k: float, threshold: float):
+        """Process a single agent's interaction with the post.
+        
+        The activation probability is modified by the post's score using a sigmoid function:
+        final_prob = base_prob * (1 / (1 + e^(-k * (score - threshold))))
+
+        where:
+        - base_prob is the agent's initial activation probability
+        - score is the post's score
+        - threshold is the score threshold where probability starts increasing significantly
+        - k is the sigmoid's steepness and controls how quickly the probability changes
+        
+        This ensures:
+        - Very low scores (<threshold) result in lower activation probability
+        - Very high scores (>threshold) result in higher activation probability
+        - The effect is smooth and bounded between 0 and the original probability
+        """
+        # Calculate score modifier using sigmoid function
+        score_modifier = 1 / (1 + math.exp(-k * (self.post.score - threshold)))
+        
+        # Combine base probability with score modifier
+        final_probability = agent.activation_probability * score_modifier
+
+        if agent.is_active and final_probability >= random.random():
             # agent sees current post state and acts
             action = agent.run(self.post)
             # update post with agent's actions
