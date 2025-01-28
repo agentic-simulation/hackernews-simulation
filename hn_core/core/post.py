@@ -20,9 +20,9 @@ class Post:
 
         # History to track changes
         self.history = []
-        self._record_history()
+        self.record_history()
 
-    def _record_history(self):
+    def record_history(self):
         """Record the current state to history."""
         state = {
             'upvotes': self.upvotes,
@@ -95,6 +95,3 @@ class Post:
 
         # Update score
         self.score = self._calculate_score(current_time)
-
-        # Record the new state in history
-        self._record_history()

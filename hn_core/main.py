@@ -25,38 +25,45 @@ def handler(obj):
     raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
 
-def save_simulation_results(post: Post, timestamp: datetime.datetime):
-    """Save simulation results to a JSON file in the Results directory."""
-    # Create Results directory if it doesn't exist
+def save_simulation_results(environment: Environment, timestamp: datetime.datetime):
+    """Save simulation results to two JSON files in the Results directory."""
     results_dir = "./results"
     os.makedirs(results_dir, exist_ok=True)
 
-    # Create filename with timestamp
-    filename = f"{timestamp.strftime('%Y%m%d_%H%M%S')}_results.json"
-    filepath = os.path.join(results_dir, filename)
+    timestamp_str = timestamp.strftime('%Y%m%d_%H%M%S')
+    
+    # Save agent actions
+    actions_filepath = os.path.join(results_dir, f"{timestamp_str}_agent_actions.json")
+    with open(actions_filepath, "w") as f:
+        json.dump(environment.agent_actions, f, indent=2, default=handler)
 
-    # Prepare results data
-    results = {
-        "timestamp": timestamp.isoformat(),
-        "post": {
-            "title": post.title,
-            "url": post.url,
-            "text": post.text,
-            "final_score": post.score,
-            "final_upvotes": post.upvotes,
-            "comments_count": len(post.comments),
-            "comments": post.comments,
-        },
+    # Save post history
+    post_filepath = os.path.join(results_dir, f"{timestamp_str}_post_history.json")
+    
+    # Post metadata
+    metadata = {
+        "post_title": environment.post.title,
+        "post_url": environment.post.url,
+        "post_text": environment.post.text
     }
+    
+    # Create post history records
+    post_history = []
+    for step, state in enumerate(environment.post.history):
+        record = {
+            "sim_step": step,
+            **metadata,
+            "upvotes": state["upvotes"],
+            "comments": state["comments"],
+            "score": state["score"]
+        }
+        post_history.append(record)
+    
+    with open(post_filepath, "w") as f:
+        json.dump(post_history, f, indent=2, default=handler)
 
-    # Save to file with custom serialization
-    with open(filepath, "w") as f:
-        json.dump(results, f, indent=2, default=handler)
 
-    return filepath
-
-
-def run(model: str, num_agents: int = None):
+def run(model: str, num_agents: int = None, total_time_steps: int = 24, batch_size: int = 10):
     load_dotenv()
 
     simulation_start = datetime.datetime.now()
@@ -118,15 +125,14 @@ def run(model: str, num_agents: int = None):
     # Run the environment
     logging.info(f"starting simulation with {len(agents)} agents...")
     environment = Environment(
-        total_time_steps=24,  # 24 hours
+        total_time_steps=total_time_steps,
         agents=agents,
         post=post,
     )
-    environment.run()
+    environment.run(batch_size)
 
     # Save results
-    results_file = save_simulation_results(environment.post, simulation_start)
-    logging.info(f"\nresults saved to: {results_file}")
+    save_simulation_results(environment, simulation_start)
 
 
 if __name__ == "__main__":
