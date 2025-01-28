@@ -62,10 +62,8 @@ def save_simulation_results(environment: Environment, timestamp: datetime.dateti
     with open(post_filepath, "w") as f:
         json.dump(post_history, f, indent=2, default=handler)
 
-    return actions_filepath, post_filepath
 
-
-def run(model: str, num_agents: int = None, total_time_steps: int = 24, batch_size: int = None):
+def run(model: str, num_agents: int = None, total_time_steps: int = 24, batch_size: int = 10):
     load_dotenv()
 
     simulation_start = datetime.datetime.now()
@@ -134,8 +132,7 @@ def run(model: str, num_agents: int = None, total_time_steps: int = 24, batch_si
     environment.run(batch_size)
 
     # Save results
-    results_file = save_simulation_results(environment, simulation_start)
-    logging.info(f"\nresults saved to: {results_file}")
+    save_simulation_results(environment, simulation_start)
 
 
 if __name__ == "__main__":

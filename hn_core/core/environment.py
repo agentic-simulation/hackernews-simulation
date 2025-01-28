@@ -21,7 +21,7 @@ class Environment:
         self.post = post
         self.agent_actions = []
 
-    def run(self, batch_size: int | None = None):
+    def run(self, batch_size: int = 20):
         """Run the simulation with sequential or parallel agent interactions.
         
         Args:
@@ -30,29 +30,20 @@ class Environment:
             delay (int | None): If provided, adds a delay between each batch of agents or agent (in seconds).
         """
 
-        if not batch_size:
-            # Sequential execution (existing logic)
-            for time_step in range(self.total_time_steps):
-                random.shuffle(self.agents)
-                for agent in self.agents:
-                    self._process_agent(agent, time_step)
-                self.post.record_history()
-        else:
-            # Batch execution
-            for time_step in range(self.total_time_steps):
-                random.shuffle(self.agents)
+        for time_step in range(self.total_time_steps):
+            random.shuffle(self.agents)
+            
+            # Process agents in batches
+            for i in range(0, len(self.agents), batch_size):
+                batch = self.agents[i:i + batch_size]
                 
-                # Process agents in batches
-                for i in range(0, len(self.agents), batch_size):
-                    batch = self.agents[i:i + batch_size]
-                    
-                    # Process each agent in parallel
-                    with ThreadPoolExecutor(max_workers=batch_size) as executor:
-                        executor.map(
-                            lambda agent: self._process_agent(agent, time_step),
-                            batch
-                        )
-                self.post.record_history()
+                # Process each agent in parallel
+                with ThreadPoolExecutor(max_workers=batch_size) as executor:
+                    executor.map(
+                        lambda agent: self._process_agent(agent, time_step),
+                        batch
+                    )
+            self.post.record_history()
 
     def _process_agent(self, agent: Agent, time_step: int):
         """Process a single agent's interaction with the post."""
