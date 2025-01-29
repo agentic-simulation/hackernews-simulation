@@ -4,6 +4,7 @@ import os
 
 from hn_core.core.environment import Environment
 
+
 def load_personas(personas_path):
     """
     Load personas from a JSON Lines file where each line contains a persona definition.
@@ -13,11 +14,6 @@ def load_personas(personas_path):
         
     Returns:
         list: List of parsed persona dictionaries
-        
-    Raises:
-        FileNotFoundError: If the personas file doesn't exist
-        ValueError: If no valid personas are found in the file
-        Exception: For other errors during file processing
     """
     personas = []
     
@@ -56,20 +52,47 @@ def handler(obj):
 
     raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
-def save_simulation_results(environment: Environment, timestamp: datetime.datetime):
-    """Save simulation results to two JSON files in the Results directory."""
+def save_simulation_results(environment: Environment):
+    """Save simulation results to JSON files in a timestamped Results directory.
+    
+    This function preserves the state and outcomes of a Hacker News post simulation by saving:
+    1. Agent Actions: A chronological record of all agent interactions and behaviors
+    2. Post History: The complete evolution of the post's performance metrics over time
+    
+    The results are saved in a directory structure:
+        ./results/
+            └── YYYYMMDD_HHMMSS/
+                ├── agent_actions.json
+                └── post_history.json
+    
+    Args:
+        environment (Environment): The simulation environment containing:
+            - agent_actions: List of all agent interactions during simulation
+            - post: The simulated HN post object with its complete history
+        timestamp (datetime.datetime): Timestamp used to create a unique directory name
+    
+    The saved files contain:
+        agent_actions.json: Chronological record of agent behaviors and interactions
+        post_history.json: Time series data for the post, including:
+            - Metadata (title, URL, text)
+            - Performance metrics per simulation step (upvotes, comments, score)
+    """
     results_dir = "./results"
     os.makedirs(results_dir, exist_ok=True)
 
-    timestamp_str = timestamp.strftime('%Y%m%d_%H%M%S')
+    timestamp_str = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+    
+    # Create a subfolder for this simulation run
+    simulation_dir = os.path.join(results_dir, timestamp_str)
+    os.makedirs(simulation_dir, exist_ok=True)
     
     # Save agent actions
-    actions_filepath = os.path.join(results_dir, f"{timestamp_str}_agent_actions.json")
+    actions_filepath = os.path.join(simulation_dir, "agent_actions.json")
     with open(actions_filepath, "w") as f:
         json.dump(environment.agent_actions, f, indent=2, default=handler)
 
     # Save post history
-    post_filepath = os.path.join(results_dir, f"{timestamp_str}_post_history.json")
+    post_filepath = os.path.join(simulation_dir, "post_history.json")
     
     # Post metadata
     metadata = {
@@ -80,11 +103,12 @@ def save_simulation_results(environment: Environment, timestamp: datetime.dateti
     
     # Create post history records
     post_history = []
-    for step, state in enumerate(environment.post.history):
+    for state in environment.post.history:
         record = {
-            "sim_step": step,
+            "sim_step": state["sim_step"],
             **metadata,
-            "upvotes": state["upvotes"],
+            "upvotes": state["upvotes"],    
+            "comments_count": state["comments_count"],
             "comments": state["comments"],
             "score": state["score"]
         }

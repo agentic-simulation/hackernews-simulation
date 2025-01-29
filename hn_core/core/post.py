@@ -2,30 +2,37 @@ from hn_core.core.constants import ActionFormat
 
 
 class Post:
-    def __init__(
-        self,
-        title: str,
-        url: str,
-        text: str,
-    ):
+    def __init__(self, title: str, url: str | None = None, text: str | None = None):
+        """Initialize a new Post instance representing a Hacker News-style submission.
+
+        This constructor creates a new post with both static and dynamic attributes.
+        Posts begin with 1 upvote (from the submitter) and maintain a history of
+        state changes for analytics and moderation purposes.
+
+        Args:
+            title (str): The headline or title of the post
+            url (str): The URL that the post links to (optional, can be empty)
+            text (str): The self-post text content (optional, can be empty)
+        """
         # Static attributes
         self.title = title
         self.url = url
         self.text = text
 
         # Dynamic attributes that depend on interaction_stats
-        self.upvotes = 1 # Always start with 1 upvote
+        self.upvotes = 1 # Always start with 1 upvote (from submitter)
         self.comments = []
         self.score = 0
 
         # History to track changes
         self.history = []
-        self.record_history()
 
-    def record_history(self):
+    def update_step_state(self, current_time):
         """Record the current state to history."""
         state = {
+            'sim_step': current_time,
             'upvotes': self.upvotes,
+            'comments_count': len(self.comments),
             'comments': list(self.comments),  # Make a copy to prevent mutation
             'score': self.score
         }
@@ -75,12 +82,13 @@ class Post:
         score = (points - 1) / pow((time_since_posted + 2), gravity) * modifiers
         return score
 
-    def update(
-        self,
-        action: ActionFormat,
-        current_time,
-    ):
-        """Update post based on agent actions"""
+    def update(self, action: ActionFormat, current_time):
+        """Update post based on agent actions
+        
+        Args:
+            action (ActionFormat): The action to apply to the post
+            current_time (int): The current time step
+        """
 
         # Check for upvote action
         if action.get(ActionFormat.UPVOTE):
