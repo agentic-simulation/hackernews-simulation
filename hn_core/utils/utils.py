@@ -3,44 +3,38 @@ import json
 import os
 
 from hn_core.core.environment import Environment
+from storage import R2Storage
 
 
-def load_personas(personas_path):
-    """
-    Load personas from a JSON Lines file where each line contains a persona definition.
-    
-    Args:
-        personas_path (str): Path to the personas file
-        
-    Returns:
-        list: List of parsed persona dictionaries
-    """
+def load_personas(bucket: str, key: str, filepath: str):
+    "load personas from R2 storage bucket"
     personas = []
-    
     try:
-        if not os.path.exists(personas_path):
-            raise FileNotFoundError(f"Personas file not found: {personas_path}")
-            
-        with open(personas_path, "r") as f:
+        r2 = R2Storage()
+        r2.get_object(bucket=bucket, key=key, filename=filepath)
+
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"Personas file not found: {filepath}")
+
+        with open(filepath, "r") as f:
             for line_num, line in enumerate(f, 1):
                 line = line.strip()
                 if not line:
                     continue
-                    
+
                 try:
                     persona = json.loads(line)
                     personas.append(persona)
                 except json.JSONDecodeError as e:
                     print(f"Skipping invalid JSON on line {line_num}: {line!r}\n"
                           f"Error: {str(e)}")
-
         if not personas:
-            raise ValueError(f"No valid personas found in file: {personas_path}")
-            
+            raise ValueError(f"No valid personas found in file: {filepath}")
+
         return personas
-        
+
     except Exception as e:
-        print(f"Failed to load personas from {personas_path}: {str(e)}")
+        print(f"Failed to load personas from {filepath}: {str(e)}")
         raise
 
 def handler(obj):
@@ -54,23 +48,23 @@ def handler(obj):
 
 def save_simulation_results(environment: Environment):
     """Save simulation results to JSON files in a timestamped Results directory.
-    
+
     This function preserves the state and outcomes of a Hacker News post simulation by saving:
     1. Agent Actions: A chronological record of all agent interactions and behaviors
     2. Post History: The complete evolution of the post's performance metrics over time
-    
+
     The results are saved in a directory structure:
         ./results/
             └── YYYYMMDD_HHMMSS/
                 ├── agent_actions.json
                 └── post_history.json
-    
+
     Args:
         environment (Environment): The simulation environment containing:
             - agent_actions: List of all agent interactions during simulation
             - post: The simulated HN post object with its complete history
         timestamp (datetime.datetime): Timestamp used to create a unique directory name
-    
+
     The saved files contain:
         agent_actions.json: Chronological record of agent behaviors and interactions
         post_history.json: Time series data for the post, including:
@@ -81,11 +75,11 @@ def save_simulation_results(environment: Environment):
     os.makedirs(results_dir, exist_ok=True)
 
     timestamp_str = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-    
+
     # Create a subfolder for this simulation run
     simulation_dir = os.path.join(results_dir, timestamp_str)
     os.makedirs(simulation_dir, exist_ok=True)
-    
+
     # Save agent actions
     actions_filepath = os.path.join(simulation_dir, "agent_actions.json")
     with open(actions_filepath, "w") as f:
@@ -93,26 +87,26 @@ def save_simulation_results(environment: Environment):
 
     # Save post history
     post_filepath = os.path.join(simulation_dir, "post_history.json")
-    
+
     # Post metadata
     metadata = {
         "post_title": environment.post.title,
         "post_url": environment.post.url,
         "post_text": environment.post.text
     }
-    
+
     # Create post history records
     post_history = []
     for state in environment.post.history:
         record = {
             "sim_step": state["sim_step"],
             **metadata,
-            "upvotes": state["upvotes"],    
+            "upvotes": state["upvotes"],
             "comments_count": state["comments_count"],
             "comments": state["comments"],
             "score": state["score"]
         }
         post_history.append(record)
-    
+
     with open(post_filepath, "w") as f:
         json.dump(post_history, f, indent=2, default=handler)

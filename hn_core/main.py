@@ -3,12 +3,10 @@ import os
 
 import fire
 from dotenv import load_dotenv
-
 from hn_core.core.agent import Agent
-from hn_core.core.environment import Environment 
+from hn_core.core.environment import Environment
 from hn_core.core.post import Post
 from hn_core.utils import load_personas, save_simulation_results
-
 
 # Load environment variables
 load_dotenv()
@@ -68,8 +66,8 @@ def run(
 
     # Load personas
     logger.info(f"Loading personas...")
-    personas_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "personas_data/500_v1.jsonl")
-    personas = load_personas(personas_path)
+    personas_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "personas_data/personas.jsonl")
+    personas = load_personas(bucket="personas", key="hn_personas_final.jsonl", filepath=personas_path)
 
     if num_agents is not None:
         logger.info(f"Using {num_agents} personas for simulation")
