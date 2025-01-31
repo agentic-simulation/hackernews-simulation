@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from hn_core.core.agent import Agent
 from hn_core.core.environment import Environment
 from hn_core.core.post import Post
-from hn_core.utils import load_personas, save_simulation_results
+from hn_core.utils.utils import load_personas, save_simulation_results
 
 # Load environment variables
 load_dotenv()

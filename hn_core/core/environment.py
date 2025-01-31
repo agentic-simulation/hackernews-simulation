@@ -1,6 +1,6 @@
+import logging
 import math
 import random
-import logging
 from concurrent.futures import ThreadPoolExecutor
 from typing import List
 
@@ -38,7 +38,7 @@ class Environment:
 
     def run(self, batch_size: int | None = None):
         """Run the simulation with sequential or parallel agent interactions.
-        
+
         Args:
             batch_size (int | None): If provided, runs simulation in batches
                                    of specified size. If None, runs a batch size of num_agents.
@@ -50,11 +50,11 @@ class Environment:
         for time_step in range(self.total_time_steps):
             logger.info(f"Processing time step {time_step}")
             random.shuffle(self.agents)
-            
+
             # Process agents in batches
             for i in range(0, len(self.agents), batch_size):
                 batch = self.agents[i:i + batch_size]
-                
+
                 # Process each agent in parallel
                 with ThreadPoolExecutor(max_workers=batch_size) as executor:
                     executor.map(
@@ -65,7 +65,7 @@ class Environment:
 
     def _process_agent(self, agent: Agent, time_step: int):
         """Process a single agent's interaction with the post.
-        
+
         The activation probability is modified by the post's score using a sigmoid function:
         final_prob = base_prob * (1 / (1 + e^(-k * (score - threshold))))
 
@@ -74,7 +74,7 @@ class Environment:
         - score is the post's score
         - threshold is the score threshold where probability starts increasing significantly
         - k is the sigmoid's steepness and controls how quickly the probability changes
-        
+
         This ensures:
         - Very low scores (<threshold) result in lower activation probability
         - Very high scores (>threshold) result in higher activation probability
@@ -82,7 +82,7 @@ class Environment:
         """
         # Calculate score modifier using sigmoid function
         score_modifier = 1 / (1 + math.exp(-self.k * (self.post.score - self.threshold)))
-        
+
         # Combine base probability with score modifier
         final_probability = agent.activation_probability * score_modifier
 

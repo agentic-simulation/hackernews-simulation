@@ -6,10 +6,9 @@ import time
 from typing import Dict, Optional
 
 import litellm
-from litellm import completion, RateLimitError
-
 from hn_core.core.constants import ActionFormat
 from hn_core.core.post import Post
+from litellm import RateLimitError, completion
 
 # Create a custom logger for the agent
 logger = logging.getLogger('hn_agent')
@@ -24,7 +23,7 @@ if not logger.handlers:
 class Agent:
     def __init__(self, bio: str, activation_probability: float, model: str, model_params: Optional[Dict] = None):
         """Initialize an Agent instance
-        
+
         Args:
             bio (str): The persona of the agent
             activation_probability (float): The probability that the agent will be active (0-1)
@@ -92,7 +91,7 @@ class Agent:
         )
 
         last_error = None
-        max_retries = 5
+        max_retries = 3
         attempt = 0
         ratelimit_attempt = 0
         while attempt < max_retries:
@@ -104,15 +103,13 @@ class Agent:
                 )
                 action = self._parse_model_output(res.choices[0].message.content)
                 return action
-
+            except RateLimitError as e:
+                backoff = min(2 ** ratelimit_attempt + 40, 60)  # Cap at 60 seconds
+                logger.warning(f"Rate limit error encountered, retrying after {backoff}s")
+                time.sleep(backoff)
+                ratelimit_attempt += 1
+                continue
             except Exception as e:
-                if isinstance(e, RateLimitError):
-                    backoff = min(2 ** ratelimit_attempt + 40, 60)  # Cap at 60 seconds
-                    logger.warning(f"Rate limit error encountered, retrying after {backoff}s")
-                    time.sleep(backoff)
-                    ratelimit_attempt += 1
-                    continue
-                
                 logger.error(f"Unexpected error on attempt {attempt + 1}: {str(e)}")
                 last_error = e
                 attempt += 1

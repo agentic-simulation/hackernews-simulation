@@ -3,7 +3,8 @@ import json
 import os
 
 from hn_core.core.environment import Environment
-from storage import R2Storage
+
+from .storage import R2Storage
 
 
 def load_personas(bucket: str, key: str, filepath: str):
