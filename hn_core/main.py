@@ -1,5 +1,3 @@
-import datetime
-import json
 import logging
 import os
 
@@ -8,67 +6,55 @@ from dotenv import load_dotenv
 from hn_core.core.agent import Agent
 from hn_core.core.environment import Environment
 from hn_core.core.post import Post
+from hn_core.utils import load_personas, save_simulation_results
 
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+# Load environment variables
+load_dotenv()
 
-
-def handler(obj):
-    """convert objects compatible with json"""
-    if isinstance(obj, (datetime.datetime, datetime.date)):
-        return obj.isoformat()
-    if isinstance(obj, set):
-        return list(obj)
-
-    raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
-
-
-def save_simulation_results(environment: Environment, timestamp: datetime.datetime):
-    """Save simulation results to two JSON files in the Results directory."""
-    results_dir = "./results"
-    os.makedirs(results_dir, exist_ok=True)
-
-    timestamp_str = timestamp.strftime('%Y%m%d_%H%M%S')
-    
-    # Save agent actions
-    actions_filepath = os.path.join(results_dir, f"{timestamp_str}_agent_actions.json")
-    with open(actions_filepath, "w") as f:
-        json.dump(environment.agent_actions, f, indent=2, default=handler)
-
-    # Save post history
-    post_filepath = os.path.join(results_dir, f"{timestamp_str}_post_history.json")
-    
-    # Post metadata
-    metadata = {
-        "post_title": environment.post.title,
-        "post_url": environment.post.url,
-        "post_text": environment.post.text
-    }
-    
-    # Create post history records
-    post_history = []
-    for step, state in enumerate(environment.post.history):
-        record = {
-            "sim_step": step,
-            **metadata,
-            "upvotes": state["upvotes"],
-            "comments": state["comments"],
-            "score": state["score"]
-        }
-        post_history.append(record)
-    
-    with open(post_filepath, "w") as f:
-        json.dump(post_history, f, indent=2, default=handler)
+# Set up custom logger
+logger = logging.getLogger('hn_main')
+logger.setLevel(logging.INFO)
+# Create handlers and formatter only if no handlers exist
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 
-def run(model: str, num_agents: int = None, total_time_steps: int = 24, batch_size: int = 10):
-    load_dotenv()
+def run(
+        model: str,
+        num_agents: int | None = None,
+        total_time_steps: int = 24,
+        batch_size: int = 10,
+        k: float = 0.1,
+        threshold: float = 5,
+    ):
+    """Runs a simulation of agent interactions on a Hacker News-style post.
 
-    simulation_start = datetime.datetime.now()
+    This function simulates how multiple AI agents with different personas interact with and
+    respond to a post, modeling social dynamics and discussion patterns similar to those on
+    Hacker News.
 
-    # create post
+    Args:
+        model (str): The name/identifier of the LLM model to use for agents (e.g., "openai/gpt-4o-mini").
+        num_agents (int, optional): Number of agents to use in simulation. If None, uses all
+            available personas. Defaults to None.
+        total_time_steps (int, optional): Duration of simulation in time steps. Each time
+            step represents a unit of simulated time (e.g., 1 hour). Defaults to 24.
+        batch_size (int, optional): Number of agents to process in parallel during each
+            simulation step. Higher values increase throughput but use more resources.
+            Defaults to 10.
+        k (float, optional): Steepness parameter for the sigmoid function that modifies agent
+            activation probability based on post score. Higher values make the probability
+            change more sharply around the threshold. Defaults to 0.1.
+        threshold (float, optional): Score threshold in the sigmoid function where agent
+            activation probability starts increasing significantly. Posts with scores below
+            this value decrease agent participation, while scores above increase it.
+            Defaults to 5.
+    """
+
+    # Create post
     post = Post(
         title="Show HN: I Created ErisForge, a Python Library for Abliteration of LLMs",
         url="https://github.com/Tsadoq/ErisForge",
@@ -78,61 +64,44 @@ def run(model: str, num_agents: int = None, total_time_steps: int = 24, batch_si
         Features - Modify internal layers of LLMs to produce altered behaviors. - Ablate or enhance model responses with the AblationDecoderLayer and AdditionDecoderLayer classes. - Measure refusal expressions in model responses using the ExpressionRefusalScorer. - Supports custom behavior directions for applying specific types of transformations.""",
     )
 
-    logging.info(f"Loading personas...")
-    personas_path = os.path.join(os.path.dirname(__file__), "personas.jsonl")
+    # Load personas
+    logger.info(f"Loading personas...")
+    personas_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "personas_data/personas.jsonl")
+    personas = load_personas(bucket="personas", key="hn_personas_final.jsonl", filepath=personas_path)
 
-    # load personas
-    try:
-        with open(personas_path, "r") as f:
-            personas = []
-            for line in f:
-                line = line.strip()
-                if line:
-                    try:
-                        persona = json.loads(line)
-                        personas.append(persona)
-                    except json.JSONDecodeError as e:
-                        logging.error(
-                            f"Error parsing persona line: {line}, error: {str(e)}"
-                        )
-
-            if not personas:
-                raise ValueError("No valid personas found in file")
-    except Exception as e:
-        raise Exception(f"error loading personas: {str(e)}")
-
-    # limit number of personas
     if num_agents is not None:
-        logging.info(f"using {num_agents} personas for simulation")
+        logger.info(f"Using {num_agents} personas for simulation")
         personas = personas[:num_agents]
     else:
-        logging.info(f"using all available personas for simulation")
+        logger.info(f"Using all available personas for simulation")
 
-    # create agents
-    logging.info("generating agents with personas...")
+    # Create agents
+    logger.info("Generating agents with personas...")
     agents = []
 
     # TODO: implement activation probability based on time
     for persona in personas:
         agent = Agent(
-            model=model,
             bio=persona["bio"],
-            activation_probability=0.3,
+            activation_probability=0.8,
+            model=model,
             model_params={"temperature": 1.0},
         )
         agents.append(agent)
 
     # Run the environment
-    logging.info(f"starting simulation with {len(agents)} agents...")
+    logger.info(f"Starting simulation with {len(agents)} agents...")
     environment = Environment(
         total_time_steps=total_time_steps,
         agents=agents,
         post=post,
+        k=k,
+        threshold=threshold,
     )
     environment.run(batch_size)
 
     # Save results
-    save_simulation_results(environment, simulation_start)
+    save_simulation_results(environment)
 
 
 if __name__ == "__main__":

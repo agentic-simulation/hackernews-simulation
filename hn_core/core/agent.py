@@ -5,34 +5,42 @@ import re
 import time
 from typing import Dict, Optional
 
-from hn_core.core.constants import ActionFormat
-from hn_core.core.post import Post
 import litellm
 from litellm import completion, RateLimitError
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+from hn_core.core.constants import ActionFormat
+from hn_core.core.post import Post
 
-litellm.suppress_debug_info = True
+# Create a custom logger for the agent
+logger = logging.getLogger('hn_agent')
+logger.setLevel(logging.INFO)
+# Create handlers and formatter only if no handlers exist
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 class Agent:
-    def __init__(
-        self,
-        model: str,
-        bio: str,
-        activation_probability: float,
-        model_params: Optional[Dict] = None,
-    ):
+    def __init__(self, bio: str, activation_probability: float, model: str, model_params: Optional[Dict] = None):
+        """Initialize an Agent instance
+        
+        Args:
+            bio (str): The persona of the agent
+            activation_probability (float): The probability that the agent will be active (0-1)
+            model (str): The model to use for generating agent responses
+            model_params (Dict): Additional parameters for the model
+        """
+
         self.bio = bio
-        self.model = model
         self.activation_probability = activation_probability
-        self.is_active = True
+        self.model = model
         self.model_params = model_params
 
-        prompt_path = os.path.join(
-            os.path.dirname(__file__), "..", "prompts", "agent_prompt.txt"
-        )
+        self.is_active = True
+
+        # Load prompt template
+        prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompts", "agent_prompt.txt")
         with open(prompt_path, "r") as f:
             self.prompt_template = f.read()
 
@@ -43,21 +51,17 @@ class Agent:
             match = re.search(json_pattern, model_output, re.DOTALL)
 
             if not match:
-                logging.info("Error: Could not find JSON content between ```json and ``` markers")
                 raise ValueError("Error: Could not find JSON content between ```json and ``` markers")
 
             json_str = match.group(1).strip()
             try:
                 data = json.loads(json_str)
                 if not ActionFormat.validate(data):
-                    logging.error(f"Invalid response format: {data}")
                     raise ValueError(f"Invalid response format: {data}")
                 return data
             except json.JSONDecodeError as e:
-                logging.error(f"Error parsing JSON: {str(e)}")
                 raise ValueError(f"Error parsing JSON: {str(e)}")
         except Exception as e:
-            logging.error(f"Unexpected error parsing model output: {str(e)}")
             raise ValueError(f"Unexpected error parsing model output: {str(e)}")
 
     def _get_agent_response(self, post: Post) -> Dict:
@@ -103,17 +107,17 @@ class Agent:
 
             except Exception as e:
                 if isinstance(e, RateLimitError):
-                    backoff = min(2 ** ratelimit_attempt + 5, 30)  # Cap at 30 seconds
-                    logging.warning(f"Rate limit error encountered, retrying after {backoff}s")
+                    backoff = min(2 ** ratelimit_attempt + 40, 60)  # Cap at 60 seconds
+                    logger.warning(f"Rate limit error encountered, retrying after {backoff}s")
                     time.sleep(backoff)
                     ratelimit_attempt += 1
                     continue
                 
-                logging.error(f"Unexpected error on attempt {attempt + 1}: {str(e)}")
+                logger.error(f"Unexpected error on attempt {attempt + 1}: {str(e)}")
                 last_error = e
                 attempt += 1
 
-        logging.error(f"All retry attempts failed. Last error: {str(last_error)}")
+        logger.error(f"All retry attempts failed. Defaulting to no action. Last error: {str(last_error)}")
         return ActionFormat.DEFAULT_ACTION
 
     def run(self, post: Post) -> Dict:
