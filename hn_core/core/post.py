@@ -1,4 +1,5 @@
-from hn_core.core.constants import ActionFormat
+from datetime import datetime
+from typing import Dict
 
 
 class Post:
@@ -27,7 +28,7 @@ class Post:
         # History to track changes
         self.history = []
 
-    def update_step_state(self, current_time):
+    def update_step_state(self, current_time:datetime):
         """Record the current state to history."""
         state = {
             'sim_step': current_time,
@@ -38,7 +39,7 @@ class Post:
         }
         self.history.append(state)
 
-    def _calculate_score(self, current_time, gravity: float = 1.8) -> float:
+    def _calculate_score(self, current_time: datetime, gravity: float = 1.8) -> float:
         """Calculate post rank using Hacker News ranking algorithm.
 
         Score = (P-1) / (T+2)^G * modifiers
@@ -67,7 +68,7 @@ class Post:
         # time_decay = time_since_posted + 2 (in hours)
 
         modifiers = 1
-        
+
         # NO_URL_PENALTY
         if not self.url:
             modifiers *= 0.4
@@ -82,22 +83,22 @@ class Post:
         score = (points - 1) / pow((time_since_posted + 2), gravity) * modifiers
         return score
 
-    def update(self, action: ActionFormat, current_time):
+    def update(self, action: Dict, current_time: datetime):
         """Update post based on agent actions
-        
+
         Args:
-            action (ActionFormat): The action to apply to the post
-            current_time (int): The current time step
+            action (dict): In the format {"upvote": upvote, "comment": comment}
+            current_time (int): The current timestep
         """
 
         # Check for upvote action
-        if action.get(ActionFormat.UPVOTE):
+        if action.get("upvote"):
             self.upvotes += 1
 
         # Check for comment action
-        comment_text = action.get(ActionFormat.COMMENT)
-        # * Comments could eventually have nested comments, so we will need to handle that
-        # * Comments could also have a score/rank, so we will need to handle that
+        comment_text = action.get("comment")
+        # TODO Comments could eventually have nested comments, so we will need to handle that
+        # TODO Comments could also have a score/rank, so we will need to handle that
         if comment_text:
             self.comments.append(comment_text)
 
