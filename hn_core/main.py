@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Optional
 
 import fire
 from dotenv import load_dotenv
@@ -24,11 +25,11 @@ if not logger.handlers:
 
 def run(
         model: str,
-        num_agents: int | None = None,
-        total_time_steps: int = 24,
-        batch_size: int = 10,
-        k: float = 0.1,
-        threshold: float = 5,
+        num_agents: Optional[int] = None,
+        total_time_steps: Optional[int] = 24,
+        batch_size: Optional[int] = 10,
+        k: Optional[float] = 0.1,
+        threshold: Optional[float] = 5,
     ):
     """Runs a simulation of agent interactions on a Hacker News-style post.
 
@@ -67,7 +68,7 @@ def run(
     # Load personas
     logger.info(f"Loading personas...")
     personas_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "personas_data/personas.jsonl")
-    personas = load_personas(bucket="personas", key="hn_personas_final.jsonl", filepath=personas_path)
+    personas = load_personas(bucket="personas", key="personas_final.jsonl", filepath=personas_path)
 
     if num_agents is not None:
         logger.info(f"Using {num_agents} personas for simulation")
@@ -82,9 +83,10 @@ def run(
     # TODO: implement activation probability based on time
     for persona in personas:
         agent = Agent(
-            bio=persona["bio"],
-            activation_probability=0.8,
+            provider="litellm",
             model=model,
+            bio=persona["bio"],
+            activation_probability=0.7,
             model_params={"temperature": 1.0},
         )
         agents.append(agent)

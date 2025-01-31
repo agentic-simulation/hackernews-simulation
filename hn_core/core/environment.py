@@ -1,4 +1,3 @@
-import logging
 import math
 import random
 from concurrent.futures import ThreadPoolExecutor
@@ -6,15 +5,9 @@ from typing import List
 
 from hn_core.core.agent import Agent
 from hn_core.core.post import Post
+from hn_core.utils.logger import get_logger
 
-logger = logging.getLogger('hn_environment')
-logger.setLevel(logging.INFO)
-# Create handlers and formatter only if no handlers exist
-if not logger.handlers:
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+logger = get_logger('hn_environment')
 
 class Environment:
     def __init__(self, total_time_steps: int, agents: List[Agent], post: Post, k: float = 0.1, threshold: float = 5):
@@ -80,13 +73,14 @@ class Environment:
         - Very high scores (>threshold) result in higher activation probability
         - The effect is smooth and bounded between 0 and the original probability
         """
-        # Calculate score modifier using sigmoid function
-        score_modifier = 1 / (1 + math.exp(-self.k * (self.post.score - self.threshold)))
+        # TODO: we could start with random probability.
+        # # Calculate score modifier using sigmoid function
+        # score_modifier = 1 / (1 + math.exp(-self.k * (self.post.score - self.threshold)))
 
-        # Combine base probability with score modifier
-        final_probability = agent.activation_probability * score_modifier
+        # # Combine base probability with score modifier
+        # final_probability = agent.activation_probability * score_modifier
 
-        if agent.is_active and final_probability >= random.random():
+        if agent.is_active and agent.activation_probability >= random.random():
             # Agent sees current post state and acts
             action = agent.run(self.post)
             # Update post with agent's actions
