@@ -15,14 +15,14 @@ class HuggingFace:
         self.api_key = api_key or os.getenv("HF_API_KEY")
         self.client = InferenceClient(token=self.api_key)
 
-    def generate(self, model: str, messages: List, **kwargs):
+    def generate(self, model: str, messages: List, response_format: Optional[BaseModel], **kwargs):
         try:
             res = self.client.chat_completion(
                 model=model,
                 messages=messages,
                 response_format={
                     "type": "json",
-                    "value": ResponseModel.model_json_schema(),
+                    "value": response_format.model_json_schema(),
                 },
                 **kwargs,
             )

@@ -7,30 +7,23 @@ from dotenv import load_dotenv
 from hn_core.core.agent import Agent
 from hn_core.core.environment import Environment
 from hn_core.core.post import Post
+from hn_core.utils.logger import get_logger
 from hn_core.utils.utils import load_personas, save_simulation_results
 
 # Load environment variables
 load_dotenv()
 
 # Set up custom logger
-logger = logging.getLogger('hn_main')
-logger.setLevel(logging.INFO)
-# Create handlers and formatter only if no handlers exist
-if not logger.handlers:
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+logger = get_logger("hn_main")
 
 
 def run(
-        model: str,
-        num_agents: Optional[int] = None,
-        total_time_steps: Optional[int] = 24,
-        batch_size: Optional[int] = 10,
-        k: Optional[float] = 0.1,
-        threshold: Optional[float] = 5,
-    ):
+    model: str,
+    num_agents: Optional[int] = None,
+    total_time_steps: Optional[int] = 24,
+    batch_size: Optional[int] = 10,
+    k: Optional[float] = 1.0,
+):
     """Runs a simulation of agent interactions on a Hacker News-style post.
 
     This function simulates how multiple AI agents with different personas interact with and
@@ -49,26 +42,23 @@ def run(
         k (float, optional): Steepness parameter for the sigmoid function that modifies agent
             activation probability based on post score. Higher values make the probability
             change more sharply around the threshold. Defaults to 0.1.
-        threshold (float, optional): Score threshold in the sigmoid function where agent
-            activation probability starts increasing significantly. Posts with scores below
-            this value decrease agent participation, while scores above increase it.
-            Defaults to 5.
     """
 
     # Create post
     post = Post(
-        title="Show HN: I Created ErisForge, a Python Library for Abliteration of LLMs",
-        url="https://github.com/Tsadoq/ErisForge",
-        text="""
-        ErisForge is a Python library designed to modify Large Language Models (LLMs) by applying transformations to their internal layers. Named after Eris, the goddess of strife and discord, ErisForge allows you to alter model behavior in a controlled manner, creating both ablated and augmented versions of LLMs that respond differently to specific types of input.
-        It is also quite useful to perform studies on propaganda and bias in LLMs (planning to experiment with deepseek).
-        Features - Modify internal layers of LLMs to produce altered behaviors. - Ablate or enhance model responses with the AblationDecoderLayer and AdditionDecoderLayer classes. - Measure refusal expressions in model responses using the ExpressionRefusalScorer. - Supports custom behavior directions for applying specific types of transformations.""",
+        title="Apple is open sourcing Swift Build ",
+        url="swift.org",
+        text="""""",
     )
 
     # Load personas
     logger.info(f"Loading personas...")
-    personas_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "personas_data/personas.jsonl")
-    personas = load_personas(bucket="personas", key="personas_final.jsonl", filepath=personas_path)
+    personas_path = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), "personas_data/personas.jsonl"
+    )
+    personas = load_personas(
+        bucket="personas", key="personas_final.jsonl", filepath=personas_path
+    )
 
     if num_agents is not None:
         logger.info(f"Using {num_agents} personas for simulation")
@@ -80,7 +70,6 @@ def run(
     logger.info("Generating agents with personas...")
     agents = []
 
-    # TODO: implement activation probability based on time
     for persona in personas:
         agent = Agent(
             provider="litellm",
@@ -98,7 +87,6 @@ def run(
         agents=agents,
         post=post,
         k=k,
-        threshold=threshold,
     )
     environment.run(batch_size)
 
