@@ -5,10 +5,9 @@ from typing import List
 
 from hn_core.core.agent import Agent
 from hn_core.core.post import Post
+from hn_core.model.model import ClassifyModel
 from hn_core.provider.litellm import LLM
 from hn_core.utils.logger import get_logger
-
-from .model import ClassifyModel
 
 logger = get_logger("hn_environment")
 

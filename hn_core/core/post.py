@@ -70,8 +70,9 @@ class Post:
             response_format=ClassifyModel,
         )
 
-        res_json = json.loads(res.choices[0].message.content)
-        categories = res_json["category"]
+        categories = json.loads(res.choices[0].message.content)
+
+        print(f"category: {categories}")
 
         if categories["gag"]:
             modifier *= 0.1
@@ -79,10 +80,10 @@ class Post:
         if categories["politics"]:
             modifier *= 0.1
 
-        if categories['dei']
+        if categories["dei"]:
             modifier *= 0.1
 
-        if categories['tutorial']
+        if categories["tutorial"]:
             modifier *= 0.1
 
         self.penalty = modifier
