@@ -8,4 +8,7 @@ class ResponseModel(BaseModel):
 
 
 class ClassifyModel(BaseModel):
-    category: str
+    gag: bool
+    politics: bool
+    dei: bool
+    tutorial: bool

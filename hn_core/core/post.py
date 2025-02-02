@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from typing import Dict
 
-from hn_core.core.model import ClassifyModel
+from hn_core.model.model import ClassifyModel
 from hn_core.prompts import prompt
 from hn_core.provider.litellm import LLM
 
@@ -46,14 +46,15 @@ class Post:
         self.history.append(state)
 
     def _calculate_penalty(self):
-        """calculate post specific penalty once in the beginning"""
+        """calculate post specific penalty"""
         modifier = 1
 
         # no url penalty
         if not self.url:
             modifier *= 0.4
 
-        # # lightweight penalty
+        # NOTE: definition of lightweight is not clear
+        # excluding from penalty until further investigation
         # if not self.text:
         #     modifier *= 0.17
 
@@ -72,16 +73,16 @@ class Post:
         res_json = json.loads(res.choices[0].message.content)
         categories = res_json["category"]
 
-        if "gag" in categories:
+        if categories["gag"]:
             modifier *= 0.1
 
-        if "politics" in categories:
+        if categories["politics"]:
             modifier *= 0.1
 
-        if "DEI" in categories:
+        if categories['dei']
             modifier *= 0.1
 
-        if "tutorial" in categories:
+        if categories['tutorial']
             modifier *= 0.1
 
         self.penalty = modifier
@@ -114,6 +115,7 @@ class Post:
             action (dict): In the format {"upvote": upvote, "comment": comment}
             current_time (int): The current timestep
         """
+        # calculate static penalty once in the beginning
         if not self.penalty:
             self._calculate_penalty()
 

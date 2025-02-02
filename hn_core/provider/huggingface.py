@@ -10,12 +10,15 @@ class ResponseModel(BaseModel):
     upvote: bool
     comment: str
 
+
 class HuggingFace:
     def __init__(self, api_key: str = None):
         self.api_key = api_key or os.getenv("HF_API_KEY")
         self.client = InferenceClient(token=self.api_key)
 
-    def generate(self, model: str, messages: List, response_format: Optional[BaseModel], **kwargs):
+    def generate(
+        self, model: str, messages: List, response_format: Optional[BaseModel], **kwargs
+    ):
         try:
             res = self.client.chat_completion(
                 model=model,
