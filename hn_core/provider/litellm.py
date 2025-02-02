@@ -1,13 +1,7 @@
-from typing import List
+from typing import List, Optional
 
 from litellm import completion
 from pydantic import BaseModel
-
-
-class ResponseModel(BaseModel):
-    thoughts: str
-    upvote: bool
-    comment: str
 
 
 class LLM:
@@ -15,14 +9,15 @@ class LLM:
         self,
         model: str,
         messages: List[str],
+        response_format: Optional[BaseModel] = None,
         **kwargs,
     ):
         try:
             res = completion(
                 model=model,
                 messages=messages,
-                response_format=ResponseModel,
-                ** kwargs,
+                response_format=response_format,
+                **kwargs,
             )
             return res
         except Exception as e:

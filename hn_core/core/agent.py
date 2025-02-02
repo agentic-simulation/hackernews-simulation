@@ -6,15 +6,25 @@ from typing import Dict, Optional
 
 import litellm
 from hn_core.core.post import Post
+from hn_core.model.model import ResponseModel
+from hn_core.prompts import prompt
 from hn_core.provider.huggingface import HuggingFace
 from hn_core.provider.litellm import LLM
 from hn_core.utils.logger import get_logger
 from litellm import RateLimitError, completion
 
-logger = get_logger('hn_agent')
+logger = get_logger("hn_agent")
+
 
 class Agent:
-    def __init__(self, provider: str, model: str, bio: str, activation_probability: float, model_params: Optional[Dict] = None):
+    def __init__(
+        self,
+        provider: str,
+        model: str,
+        bio: str,
+        activation_probability: float,
+        model_params: Optional[Dict] = None,
+    ):
         """Initialize an Agent instance
 
         Args:
@@ -36,12 +46,6 @@ class Agent:
         else:
             self.llm = LLM()
 
-        # Load prompt template
-        prompt_path = os.path.join(os.path.dirname(__file__), "..", "prompts", "agent_prompt.txt")
-        with open(prompt_path, "r") as f:
-            self.prompt_template = f.read()
-
-
     def _get_agent_response(self, post: Post) -> Dict:
         """Generate agent response based on persona and post content"""
 
@@ -57,11 +61,6 @@ class Agent:
             ),
         }
 
-        prompt = self.prompt_template.format(
-            persona=self.bio,
-            **post_data,
-        )
-
         last_error = None
         max_retries = 3
         attempt = 0
@@ -70,17 +69,25 @@ class Agent:
             try:
                 res = self.llm.generate(
                     model=self.model,
-                    messages=[{"role": "user", "content": prompt}],
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": prompt.agent_prompt.format(
+                                persona=self.bio,
+                                **post_data,
+                            ),
+                        }
+                    ],
+                    response_format=ResponseModel,
                     **self.model_params,
                 )
                 action = json.loads(res.choices[0].message.content)
-                return {
-                    "upvote": action['upvote'],
-                    "comment": action['comment']
-                }
+                return {"upvote": action["upvote"], "comment": action["comment"]}
             except RateLimitError as e:
-                backoff = min(2 ** ratelimit_attempt + 40, 60)  # Cap at 60 seconds
-                logger.warning(f"Rate limit error encountered, retrying after {backoff}s")
+                backoff = min(2**ratelimit_attempt + 40, 60)  # Cap at 60 seconds
+                logger.warning(
+                    f"Rate limit error encountered, retrying after {backoff}s"
+                )
                 time.sleep(backoff)
                 ratelimit_attempt += 1
                 continue
@@ -89,7 +96,9 @@ class Agent:
                 last_error = e
                 attempt += 1
 
-        logger.error(f"All retry attempts failed. Defaulting to no action. Last error: {str(last_error)}")
+        logger.error(
+            f"All retry attempts failed. Defaulting to no action. Last error: {str(last_error)}"
+        )
         return {
             "upvote": False,
             "comment": None,

@@ -1,5 +1,10 @@
+import json
 from datetime import datetime
 from typing import Dict
+
+from hn_core.model.model import ClassifyModel
+from hn_core.prompts import prompt
+from hn_core.provider.litellm import LLM
 
 
 class Post:
@@ -21,66 +26,87 @@ class Post:
         self.text = text
 
         # Dynamic attributes that depend on interaction_stats
-        self.upvotes = 1 # Always start with 1 upvote (from submitter)
+        self.upvotes = 1  # Always start with 1 upvote (from submitter)
         self.comments = []
         self.score = 0
+        self.penalty = None
 
         # History to track changes
         self.history = []
 
-    def update_step_state(self, current_time:datetime):
+    def update_step_state(self, current_time: datetime):
         """Record the current state to history."""
         state = {
-            'sim_step': current_time,
-            'upvotes': self.upvotes,
-            'comments_count': len(self.comments),
-            'comments': list(self.comments),  # Make a copy to prevent mutation
-            'score': self.score
+            "sim_step": current_time,
+            "upvotes": int(self.upvotes),
+            "comments_count": int(len(self.comments)),
+            "comments": list(self.comments),  # Make a copy to prevent mutation
+            "score": float(self.score),  # Ensure score is stored as float
         }
         self.history.append(state)
 
-    def _calculate_score(self, current_time: datetime, gravity: float = 1.8) -> float:
-        """Calculate post rank using Hacker News ranking algorithm.
+    def _calculate_penalty(self):
+        """calculate post specific penalty"""
+        modifier = 1
 
-        Score = (P-1) / (T+2)^G * modifiers
-        where:
+        # no url penalty
+        if not self.url:
+            modifier *= 0.4
+
+        # NOTE: definition of lightweight is not clear
+        # excluding from penalty until further investigation
+        # if not self.text:
+        #     modifier *= 0.17
+
+        llm = LLM()
+        res = llm.generate(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": prompt.classify.format(title=self.title, text=self.text),
+                }
+            ],
+            response_format=ClassifyModel,
+        )
+
+        categories = json.loads(res.choices[0].message.content)
+
+        print(f"category: {categories}")
+
+        if categories["gag"]:
+            modifier *= 0.1
+
+        if categories["politics"]:
+            modifier *= 0.1
+
+        if categories["dei"]:
+            modifier *= 0.1
+
+        if categories["tutorial"]:
+            modifier *= 0.1
+
+        self.penalty = modifier
+
+    def _calculate_score(self, current_time: int, penalty: float):
+        """
+        score = ((P-1)**0.8 / (T+2)**1.8) * M
+
         P = points (upvotes)
         T = time since submission (in hours)
         G = Gravity, defaults to 1.8
+        M = Various penalty factor
 
-        Modifiers:
-            TYPE_PENALTY = 0.8 -> Penalty for non-story/poll content
-            NO_URL_PENALTY = 0.4 -> Penalty for posts without a URL
-            SEVERITY_PENALTY = 0.001 -> Penalty for posts with buried content
-            LIGHTWEIGHT_PENALTY = 0.17 -> Penalty for lightweight content
-            GAG_PENALTY = 0.1 -> Penalty for gagged content
-
-        Returns:
-            float: The calculated rank
         """
-        # TODO: Implement the modifiers
-        # TYPE_PENALTY = 0.8 -> Penalty for non-story/poll content
-        # SEVERITY_PENALTY = 0.001 -> Penalty for posts with buried content
-        # LIGHTWEIGHT_PENALTY = 0.17 -> Penalty for lightweight content
-        # GAG_PENALTY = 0.1 -> Penalty for gagged content
-        # rank = (base_score / time_decay) * modifiers
-        # base_score = (score - 1)^0.8 if (score > 1) else (score - 1)
-        # time_decay = time_since_posted + 2 (in hours)
-
-        modifiers = 1
-
-        # NO_URL_PENALTY
-        if not self.url:
-            modifiers *= 0.4
+        # controversial penalty. this needs to be calculated at every timestep because the values change.
+        if len(self.comments) > 40 and self.upvotes < len(self.comments):
+            penalty *= (self.upvotes / len(self.comments)) ** 3
 
         points = self.upvotes
+        time_since_posted = current_time
 
-        # Calculate time since submission in hours (T)
-        time_since_posted = current_time  # in hours
+        score = ((points - 1) ** 0.8 / ((time_since_posted + 2) ** 1.8)) * penalty
 
-        # Apply the formula: (P-1) / (T+2)^G * modifiers
-        # Note: We subtract 1 from points to negate submitter's vote
-        score = (points - 1) / pow((time_since_posted + 2), gravity) * modifiers
         return score
 
     def update(self, action: Dict, current_time: datetime):
@@ -90,6 +116,9 @@ class Post:
             action (dict): In the format {"upvote": upvote, "comment": comment}
             current_time (int): The current timestep
         """
+        # calculate static penalty once in the beginning
+        if not self.penalty:
+            self._calculate_penalty()
 
         # Check for upvote action
         if action.get("upvote"):
@@ -103,4 +132,7 @@ class Post:
             self.comments.append(comment_text)
 
         # Update score
-        self.score = self._calculate_score(current_time)
+        self.score = self._calculate_score(
+            current_time=current_time,
+            penalty=self.penalty,
+        )
