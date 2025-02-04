@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 import json
 import os
 from typing import List
@@ -8,7 +9,17 @@ from botocore.client import Config
 
 class R2Storage:
     def __init__(self, token: str = None):
+        # Load environment variables from .env file
+        load_dotenv()
+        
         self.token = token or os.getenv("R2_API_KEY")
+        
+        # Verify that required environment variables are present
+        required_vars = ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY"]
+        missing_vars = [var for var in required_vars if not os.getenv(var)]
+        if missing_vars:
+            raise Exception(f"Missing required environment variables: {', '.join(missing_vars)}")
+            
         try:
             self.client = boto3.client(
                 "s3",
@@ -61,7 +72,7 @@ class R2Storage:
         self,
         bucket: str,
         key: str,
-        filename: str,
+        filename: str = None,
     ):
         try:
             response = self.client.get_object(
@@ -69,12 +80,38 @@ class R2Storage:
                 Key=key,
             )
             stream = response["Body"]
-            if not filename.endswith(".jsonl"):
-                filename += ".jsonl"
-
-            # Write stream to JSONL file
-            with open(filename, "wb") as f:
-                for chunk in stream.iter_chunks():
-                    f.write(chunk)
+            
+            # If filename is provided, save to file
+            if filename:
+                if not filename.endswith(".jsonl"):
+                    filename += ".jsonl"
+                with open(filename, "wb") as f:
+                    for chunk in stream.iter_chunks():
+                        f.write(chunk)
+            
+            # Read and parse the data
+            data = stream.read().decode('utf-8')
+            if key.endswith('.json'):
+                return json.loads(data)
+            elif key.endswith('.jsonl'):
+                return [json.loads(line) for line in data.splitlines() if line.strip()]
+            else:
+                return data
+            
         except Exception as e:
             raise Exception(f"Failed to get object from R2: {str(e)}")
+
+    def download_file(
+        self,
+        bucket: str,
+        key: str,
+        filename: str,
+    ):
+        try:
+            self.client.download_file(
+                Bucket=bucket,
+                Key=key,
+                Filename=filename,
+            )
+        except Exception as e:
+            raise Exception(f"Failed to download file from R2: {str(e)}")
