@@ -8,16 +8,13 @@ class HNPersona:
         self.template = template
         
     def get_prompt(self, user_id: str):
-        self.user = {}
-        self.user_data = self._get_user_data(user_id)
-
-        self._basic_metrics()
-        self._comments_examples()
-        self._posts_examples()
+        user_data = self._get_user_data(user_id)
         
-        prompt = self._get_prompt()
-
-        return prompt
+        metrics = self._basic_metrics(user_data)
+        comments = self._comments_examples(user_data)
+        posts = self._posts_examples(user_data)
+        
+        return self._get_prompt(metrics, comments, posts)
 
     def _get_user_data(self, user_id):
         user = self.users[user_id].copy()  # Create a copy to avoid modifying original
@@ -52,36 +49,36 @@ class HNPersona:
             return item
         return self.get_root_story(item['parent'])
 
-    def _basic_metrics(self):
-        self.user['karma'] = self.user_data.get('karma', None)
-        self.user['about'] = md(self.user_data['about']).strip() if self.user_data.get('about') else None
+    def _basic_metrics(self, user_data):
+        return {
+            'karma': user_data.get('karma', None),
+            'about': md(user_data['about']).strip() if user_data.get('about') else None,
+            'direct_comments_count': sum(1 for item in user_data.get('submitted', [])
+                if isinstance(item, dict) and 'comment' in item and not item['comment'].get('dead') and item.get('is_direct_reply', False)),
+            'total_comments_count': sum(1 for item in user_data.get('submitted', [])
+                if isinstance(item, dict) and 'comment' in item and not item['comment'].get('dead')),
+            'posts_count': sum(1 for item in user_data.get('submitted', [])
+                if item.get('type') == 'story' and not item.get('dead'))
+        }
 
-        submitted = self.user_data.get('submitted', [])
-        self.user['direct_comments_count'] = sum(1 for item in submitted 
-            if isinstance(item, dict) and 'comment' in item and not item['comment'].get('dead') and item.get('is_direct_reply', False))
-        self.user['total_comments_count'] = sum(1 for item in submitted 
-            if isinstance(item, dict) and 'comment' in item and not item['comment'].get('dead'))
-        self.user['indirect_comments_count'] = self.user['total_comments_count'] - self.user['direct_comments_count']
-        self.user['posts_count'] = sum(1 for item in submitted if item.get('type') == 'story' and not item.get('dead'))
-
-    def _comments_examples(self, n: int = 10):
+    def _comments_examples(self, user_data, n: int = 10):
         comments = [
-            item for item in self.user_data['submitted'] 
-            if isinstance(item, dict) and 
-            (('type' in item and item.get('type') == 'comment') or 'comment' in item) and 
+            item for item in user_data['submitted']
+            if isinstance(item, dict) and
+            (('type' in item and item.get('type') == 'comment') or 'comment' in item) and
             not (item.get('dead') if 'type' in item else item['comment'].get('dead'))
         ]
-        self.user['comments_examples'] = comments[:n]
+        return comments[:n]
 
-    def _posts_examples(self, n: int = 10):
-        posts = [item for item in self.user_data['submitted'] if item.get('type') == 'story' and not item.get('dead')]
-        self.user['posts_examples'] = posts[:n]
+    def _posts_examples(self, user_data, n: int = 10):
+        return [item for item in user_data['submitted'] 
+                if item.get('type') == 'story' and not item.get('dead')][:n]
 
-    def _get_prompt(self):
+    def _get_prompt(self, metrics, comments, posts):
         # Format direct reply comments with their root stories
         comments_formatted = []
         count = 0
-        for comment in self.user['comments_examples']:
+        for comment in comments:
             if isinstance(comment, dict) and 'comment' in comment and comment.get('is_direct_reply'):
                 root_story = comment.get('root_story', {})
                 comment_text = comment['comment'].get('text', '')
@@ -105,7 +102,7 @@ class HNPersona:
         # Format the posts
         posts_formatted = []
         count = 0
-        for post in self.user['posts_examples']:
+        for post in posts:
             count += 1
             title = post.get('title', '')
             url = post.get('url', '')
@@ -121,15 +118,18 @@ class HNPersona:
         
         posts_formatted = '\n'.join(posts_formatted)
 
+        # Add indirect comments count to metrics
+        metrics['indirect_comments_count'] = metrics['total_comments_count'] - metrics['direct_comments_count']
+
         # Create a mapping of template variables to their values
         replacements = {
             '{{COMMENTS}}': comments_formatted if comments_formatted else 'None',
             '{{POSTS}}': posts_formatted if posts_formatted else 'None',
-            '{{ABOUT}}': self.user['about'] if self.user['about'] else 'Not provided',
-            '{{COMMENTS_COUNT}}': str(self.user['total_comments_count']),
-            '{{DIRECT_COMMENTS_COUNT}}': str(self.user['direct_comments_count']),
-            '{{INDIRECT_COMMENTS_COUNT}}': str(self.user['indirect_comments_count']),
-            '{{POSTS_COUNT}}': str(self.user['posts_count'])
+            '{{ABOUT}}': metrics['about'] if metrics['about'] else 'Not provided',
+            '{{COMMENTS_COUNT}}': str(metrics['total_comments_count']),
+            '{{DIRECT_COMMENTS_COUNT}}': str(metrics['direct_comments_count']),
+            '{{INDIRECT_COMMENTS_COUNT}}': str(metrics['indirect_comments_count']),
+            '{{POSTS_COUNT}}': str(metrics['posts_count'])
         }
         
         # Apply all replacements to the template
@@ -145,6 +145,7 @@ if __name__ == '__main__':
     import os
     import json
     from hn_core.utils.storage import R2Storage
+    from hn_core.prompts.prompt import agent_prompt
 
     # if hn_archive does not exist locally then download it from R2
     if not os.path.exists('hn_archive'):
@@ -162,7 +163,7 @@ if __name__ == '__main__':
 
     # Here is how to get the persona prompt. 
     # TODO: This can then be fed into the Agent class to get the response
-    template = open('hn_core/personas/template.txt').read()
+    template = agent_prompt
     persona = HNPersona(users, items, template)
     user_id = 'tonymet' # wilg
     prompt = persona.get_prompt(user_id)
