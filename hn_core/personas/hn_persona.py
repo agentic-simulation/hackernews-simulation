@@ -92,10 +92,10 @@ class HNPersona:
                 count += 1
                 formatted_comment = (
                     f'<comment_{count}>\n'
-                    + (f'Post Title: {title}\n' if title else '')
-                    + (f'Post URL: {url}\n' if url else '') 
-                    + (f'Post Text: {story_text}\n' if story_text else '')
-                    + f'Your comment: {comment_text}\n'
+                    + (f'<post_title>{title}</post_title>\n' if title else '')
+                    + (f'<post_url>{url}</post_url>\n' if url else '') 
+                    + (f'<post_text>{story_text}</post_text>\n' if story_text else '')
+                    + f'<your_comment>{comment_text}</your_comment>\n'
                     f'</comment_{count}>'
                 )
                 comments_formatted.append(formatted_comment)
@@ -112,9 +112,9 @@ class HNPersona:
             story_text = md(post['text']).strip() if post.get('text') else ''
             formatted_post = (
                 f'<post_{count}>\n'
-                + (f'Your Post Title: {title}\n' if title else '')
-                + (f'Your Post URL: {url}\n' if url else '') 
-                + (f'Your Post Text: {story_text}\n' if story_text else '')
+                + (f'<post_title>{title}</post_title>\n' if title else '')
+                + (f'<post_url>{url}</post_url>\n' if url else '') 
+                + (f'<post_text>{story_text}</post_text>\n' if story_text else '')
                 + f'</post_{count}>'
             )
             posts_formatted.append(formatted_post)
