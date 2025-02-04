@@ -163,9 +163,7 @@ if __name__ == '__main__':
 
     # Here is how to get the persona prompt. 
     # TODO: This can then be fed into the Agent class to get the response
-    template = agent_prompt
-    persona = HNPersona(users, items, template)
+    persona = HNPersona(users, items, agent_prompt)
     user_id = 'tonymet' # wilg
     prompt = persona.get_prompt(user_id)
     print(prompt)
-

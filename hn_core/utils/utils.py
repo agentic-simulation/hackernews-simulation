@@ -1,8 +1,9 @@
 import datetime
 import json
 import os
+from typing import List
 
-from hn_core.core.environment import Environment
+from hn_core.simulation.environment import Environment
 
 from .storage import R2Storage
 
@@ -27,8 +28,10 @@ def load_personas(bucket: str, key: str, filepath: str):
                     persona = json.loads(line)
                     personas.append(persona)
                 except json.JSONDecodeError as e:
-                    print(f"Skipping invalid JSON on line {line_num}: {line!r}\n"
-                          f"Error: {str(e)}")
+                    print(
+                        f"Skipping invalid JSON on line {line_num}: {line!r}\n"
+                        f"Error: {str(e)}"
+                    )
         if not personas:
             raise ValueError(f"No valid personas found in file: {filepath}")
 
@@ -38,6 +41,7 @@ def load_personas(bucket: str, key: str, filepath: str):
         print(f"Failed to load personas from {filepath}: {str(e)}")
         raise
 
+
 def handler(obj):
     """convert objects compatible with json"""
     if isinstance(obj, (datetime.datetime, datetime.date)):
@@ -46,6 +50,30 @@ def handler(obj):
         return list(obj)
 
     raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+
+
+def build_simulation_results(environment: Environment) -> (List, List):
+    metadata = {
+        "post_title": environment.post.title,
+        "post_url": environment.post.url,
+        "post_text": environment.post.text,
+    }
+
+    # Create post history records
+    post_history = []
+    for state in environment.post.history:
+        record = {
+            "sim_step": state["sim_step"],
+            **metadata,
+            "upvotes": state["upvotes"],
+            "comments_count": state["comments_count"],
+            "comments": state["comments"],
+            "score": state["score"],
+        }
+        post_history.append(record)
+
+    return environment.agent_actions, post_history
+
 
 def save_simulation_results(environment: Environment):
     """Save simulation results to JSON files in a timestamped Results directory.
@@ -75,39 +103,20 @@ def save_simulation_results(environment: Environment):
     results_dir = "./results"
     os.makedirs(results_dir, exist_ok=True)
 
-    timestamp_str = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+    timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # Create a subfolder for this simulation run
     simulation_dir = os.path.join(results_dir, timestamp_str)
     os.makedirs(simulation_dir, exist_ok=True)
 
+    agent_actions, post_history = build_simulation_results(environment=environment)
+
     # Save agent actions
     actions_filepath = os.path.join(simulation_dir, "agent_actions.json")
     with open(actions_filepath, "w") as f:
-        json.dump(environment.agent_actions, f, indent=2, default=handler)
+        json.dump(agent_actions, f, indent=2, default=handler)
 
     # Save post history
     post_filepath = os.path.join(simulation_dir, "post_history.json")
-
-    # Post metadata
-    metadata = {
-        "post_title": environment.post.title,
-        "post_url": environment.post.url,
-        "post_text": environment.post.text
-    }
-
-    # Create post history records
-    post_history = []
-    for state in environment.post.history:
-        record = {
-            "sim_step": state["sim_step"],
-            **metadata,
-            "upvotes": state["upvotes"],
-            "comments_count": state["comments_count"],
-            "comments": state["comments"],
-            "score": state["score"]
-        }
-        post_history.append(record)
-
     with open(post_filepath, "w") as f:
         json.dump(post_history, f, indent=2, default=handler)
