@@ -2,9 +2,10 @@ import json
 from datetime import datetime
 from typing import Dict
 
-from hn_core.model.model import ClassifyModel
 from hn_core.prompts import prompt
 from hn_core.provider.litellm import LLM
+
+from .model import ClassifyModel
 
 
 class Post:

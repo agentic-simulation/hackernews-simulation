@@ -18,7 +18,9 @@ dependencies = [
     "selenium (>=4.28.1,<5.0.0)",
     "webdriver-manager (>=4.0.2,<5.0.0)",
     "boto3 (>=1.36.9,<2.0.0)",
-    "huggingface-hub (>=0.28.1,<0.29.0)"
+    "huggingface-hub (>=0.28.1,<0.29.0)",
+    "fastapi (>=0.115.8,<0.116.0)",
+    "uvicorn (>=0.27.1,<0.28.0)"
 ]
 
 
@@ -29,4 +31,3 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"
 pytest-cov = "^6.0.0"
-

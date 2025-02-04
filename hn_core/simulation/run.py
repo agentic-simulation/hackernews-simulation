@@ -1,26 +1,28 @@
-import logging
 import os
+from dataclasses import dataclass
 from typing import Optional
 
 import fire
 from dotenv import load_dotenv
-from hn_core.core.agent import Agent
-from hn_core.core.environment import Environment
-from hn_core.core.post import Post
+from hn_core.utils import utils
 from hn_core.utils.logger import get_logger
-from hn_core.utils.utils import load_personas, save_simulation_results
 
-# Load environment variables
-load_dotenv()
+from .agent import Agent
+from .environment import Environment
+from .post import Post
 
-# Set up custom logger
 logger = get_logger("hn_main")
+
+load_dotenv()
 
 
 def run(
+    title: str,
+    url: str,
+    text: str,
     model: str,
     num_agents: Optional[int] = None,
-    total_time_steps: Optional[int] = 24,
+    total_time_steps: Optional[int] = 10,
     batch_size: Optional[int] = 10,
     k: Optional[float] = 1.0,
 ):
@@ -46,17 +48,17 @@ def run(
 
     # Create post
     post = Post(
-        title="Apple is open sourcing Swift Build ",
-        url="swift.org",
-        text="""""",
+        title=title,
+        url=url,
+        text=text,
     )
 
     # Load personas
     logger.info(f"Loading personas...")
     personas_path = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)), "personas_data/personas.jsonl"
+        os.path.dirname(os.path.dirname(__file__)), "..", "data/persona/personas.jsonl"
     )
-    personas = load_personas(
+    personas = utils.load_personas(
         bucket="personas", key="personas_final.jsonl", filepath=personas_path
     )
 
@@ -88,10 +90,15 @@ def run(
         post=post,
         k=k,
     )
-    environment.run(batch_size)
+    environment.run(batch_size=batch_size)
+
+    # build simulation result
+    _, post_history = utils.build_simulation_results(environment=environment)
 
     # Save results
-    save_simulation_results(environment)
+    utils.save_simulation_results(environment=environment)
+
+    return post_history[-1]
 
 
 if __name__ == "__main__":
