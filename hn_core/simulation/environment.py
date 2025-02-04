@@ -35,7 +35,7 @@ class Environment:
         self.post = post
         self.k = k
         self.agent_actions = []
-        self.activated = 0
+        self.activated = None
 
     def run(self, max_workers: int = 10, batch_size: int | None = None):
         """Run the simulation with sequential or parallel agent interactions."""
@@ -47,6 +47,7 @@ class Environment:
             logger.info(f"Processing time step {time_step}")
             random.shuffle(self.agents)
 
+            self.activated = 0
             # Process agents in batches
             for i in range(0, len(self.agents), batch_size):
                 batch = self.agents[i : i + batch_size]
@@ -61,9 +62,7 @@ class Environment:
                     )
                 self.post.update_step_state(time_step)
 
-                logger.info(
-                    f"Activated agents: {self.activated} at time_step: {time_step}"
-                )
+            logger.info(f"Activated agents: {self.activated} at time_step: {time_step}")
 
     def _process_agent(self, agent: Agent, time_step: int):
         """Process a single agent's interaction with the post.

@@ -56,7 +56,7 @@ def run(
     # Load personas
     logger.info(f"Loading personas...")
     personas_path = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)), "..", "personas_data/personas.jsonl"
+        os.path.dirname(os.path.dirname(__file__)), "..", "data/persona/personas.jsonl"
     )
     personas = utils.load_personas(
         bucket="personas", key="personas_final.jsonl", filepath=personas_path
