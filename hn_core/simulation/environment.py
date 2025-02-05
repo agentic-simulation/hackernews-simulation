@@ -90,7 +90,7 @@ class Environment:
             action = agent.run(self.post)
 
             self.agent_actions.append(
-                {"sim_step": time_step, "agent_bio": agent.bio, "actions": action}
+                {"sim_step": time_step, "agent_id": agent.id, "actions": action}
             )
 
             self.post.update(action=action, current_time=time_step)

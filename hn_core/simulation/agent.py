@@ -17,22 +17,23 @@ logger = get_logger("hn_agent")
 class Agent:
     def __init__(
         self,
+        id: str,
         provider: str,
         model: str,
-        bio: str,
+        agent_prompt: str,
         activation_probability: float,
         model_params: Optional[Dict] = None,
     ):
         """Initialize an Agent instance
 
         Args:
-            bio (str): The persona of the agent
+            agent_prompt (str): The persona of the agent
             activation_probability (float): The probability that the agent will be active (0-1)
             model (str): The model to use for generating agent responses
             model_params (Dict): Additional parameters for the model
         """
-
-        self.bio = bio
+        self.id = id
+        self.agent_prompt = agent_prompt
         self.activation_probability = activation_probability
         self.model = model
         self.model_params = model_params
@@ -70,8 +71,7 @@ class Agent:
                     messages=[
                         {
                             "role": "user",
-                            "content": prompt.agent_prompt.format(
-                                persona=self.bio,
+                            "content": self.agent_prompt.format(
                                 **post_data,
                             ),
                         }

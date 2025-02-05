@@ -11,6 +11,16 @@ from .agent import Agent
 from .environment import Environment
 from .post import Post
 
+
+
+
+import json
+from hn_core.utils.storage import R2Storage
+from hn_core.prompts.prompt import agent_prompt
+from hn_core.simulation.hn_persona import HNPersona
+
+
+
 logger = get_logger("hn_main")
 
 load_dotenv()
@@ -55,28 +65,38 @@ def run(
 
     # Load personas
     logger.info(f"Loading personas...")
-    personas_path = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)), "..", "data/persona/personas.jsonl"
+    # if hn_archive does not exist locally then download it from R2
+    hn_archive_path = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), "..", "data/hn_archive"
     )
-    personas = utils.load_personas(
-        bucket="personas", key="personas_final.jsonl", filepath=personas_path
-    )
+    if not os.path.exists(hn_archive_path):
+        os.makedirs(hn_archive_path)
+        storage = R2Storage()
+        storage.download_file("hn-archive", "users.json", hn_archive_path + "/users.json")
+        storage.download_file("hn-archive", "items.json", hn_archive_path + "/items.json")
 
+    users = json.load(open(hn_archive_path + "/users.json"))
+    items = json.load(open(hn_archive_path + "/items.json"))
+
+    user_ids = list(users.keys())
     if num_agents is not None:
-        logger.info(f"Using {num_agents} personas for simulation")
-        personas = personas[:num_agents]
+        logger.info(f"Using {num_agents} users for simulation")
+        user_ids = user_ids[:num_agents]
     else:
-        logger.info(f"Using all available personas for simulation")
+        logger.info(f"Using all available {len(users)} users for simulation")
 
     # Create agents
     logger.info("Generating agents with personas...")
     agents = []
 
-    for persona in personas:
+    persona = HNPersona(users, items, agent_prompt)
+    for user_id in user_ids:
+        prompt = persona.get_prompt(user_id)
         agent = Agent(
+            id=user_id,
             provider="litellm",
             model=model,
-            bio=persona["bio"],
+            agent_prompt=prompt,
             activation_probability=0.7,
             model_params={"temperature": 1.0},
         )

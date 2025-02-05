@@ -52,7 +52,7 @@ def handler(obj):
     raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
 
-def build_simulation_results(environment: Environment) -> (List, List):
+def build_simulation_results(environment: Environment) -> tuple[List, List]:
     metadata = {
         "post_title": environment.post.title,
         "post_url": environment.post.url,

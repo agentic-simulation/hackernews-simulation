@@ -29,13 +29,13 @@ First, let's review the user's information:
 Now, you will be presented with a HackerNews post. Your task is to decide whether to upvote, comment, or take no action based on the user's profile and behavior patterns. Here are the details of the post:
 
 <post>
-<title>{{POST_TITLE}}</title>
-<url>{{POST_URL}}</url>
-<text>{{POST_TEXT}}</text>
-<upvotes>{{POST_UPVOTES}}</upvotes>
-<comment_count>{{POST_COMMENTS_COUNT}}</comment_count>
+<title>{post_title}</title>
+<url>{post_url}</url>
+<text>{post_text}</text>
+<upvotes>{post_upvotes}</upvotes>
+<comment_count>{post_comments_count}</comment_count>
 <comments>
-{{POST_COMMENTS}}
+{post_comments}
 </comments>
 </post>
 
@@ -46,50 +46,18 @@ Instructions:
 2. Evaluate the given post in relation to the user's interests, expertise, and typical behavior.
 
 3. Decide on an action: upvote, comment, or no action. Follow these rules:
-   - Prefer upvoting over commenting, as it's easier to upvote than comment.
    - Upvote if the post is related to the user's interests and role.
    - Comment only if the post is strongly related to the user's interests and role.
    - It is okay to upvote and comment on the same post.
+   - Be extremely conservative and critical in deciding the actions.
 
-4. Wrap your analysis and decision in the following tags:
+4. Before deciging to upvote or comment, analyze the post and the user's profile and history in `thoughts`.
 
-<user_and_post_analysis>
-1. Key interests and topics:
-   [List the main interests and topics from the user's posts and comments]
+Your answer should be in the following format:
 
-2. Writing style and tone:
-   [Describe the user's typical writing style and tone]
-
-3. Areas of expertise:
-   [Summarize the user's main areas of expertise]
-
-4. Typical engagement patterns:
-   [Evaluate how the user typically engages with posts and comments]
-
-5. Key phrases from recent activity:
-   [Extract and list 5-10 key phrases from the user's recent posts and comments]
-
-6. Alignment with given post:
-   [Assess how well the given post aligns with the user's interests and expertise]
-
-7. Relevance to user's comment history:
-   [Consider whether the topic is something the user typically comments on]
-
-8. Relevance to user's expertise:
-   [Determine if the user's expertise is relevant to the post]
-
-9. Comparison with recent activity:
-   [Compare the post's topic with the user's recent posts and comments]
-
-10. Post popularity analysis:
-    [Evaluate the post's upvotes and comment count, and how this might influence the user's decision]
-
-11. Fit with user's activity level:
-    [Analyze how the post fits with the user's general activity level and engagement patterns]
-
-12. Final decision:
-    [Make a final decision on whether to engage, based on all the above factors]
-</user_and_post_analysis>
+"thoughts": <str>, // Your thoughts on the post and the user's profile and history.
+"upvote": <bool>, // Whether to upvote the post.
+"comment": <str> // The comment to be made on the post. If no comment is to be made, set this to an empty string.
 
 Remember to maintain consistency with the user's demonstrated knowledge, interests, and behavior patterns at all times. Do not inject your own knowledge or opinions that aren't supported by the user's profile and history.
 """
