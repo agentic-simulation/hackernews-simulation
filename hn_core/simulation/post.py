@@ -35,6 +35,9 @@ class Post:
         # History to track changes
         self.history = []
 
+        # Calculate penalty at initialization
+        self._calculate_penalty()
+
     def update_step_state(self, current_time: datetime):
         """Record the current state to history."""
         state = {
@@ -117,9 +120,6 @@ class Post:
             action (dict): In the format {"upvote": upvote, "comment": comment}
             current_time (int): The current timestep
         """
-        # calculate static penalty once in the beginning
-        if not self.penalty:
-            self._calculate_penalty()
 
         # Check for upvote action
         if action.get("upvote"):

@@ -1,4 +1,8 @@
 from markdownify import markdownify as md
+from bs4 import MarkupResemblesLocatorWarning
+import warnings
+
+warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
 
 class HNPersona:
