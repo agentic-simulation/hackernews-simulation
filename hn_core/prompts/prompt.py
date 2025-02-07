@@ -51,13 +51,14 @@ Instructions:
    - It is okay to upvote and comment on the same post.
    - Be extremely conservative and critical in deciding the actions.
 
-4. Before deciging to upvote or comment, analyze the post and the user's profile and history in `thoughts`.
+4. Before deciding to upvote or comment, analyze the post and the user's profile and history in `thoughts`.
 
 Your answer should be in the following format:
 
 "thoughts": <str>, // Your thoughts on the post and the user's profile and history.
 "upvote": <bool>, // Whether to upvote the post.
 "comment": <str> // The comment to be made on the post. If no comment is to be made, set this to an empty string.
+"role": <str> // Your persona's professional role based on the expertise and interest.
 
 Remember to maintain consistency with the user's demonstrated knowledge, interests, and behavior patterns at all times. Do not inject your own knowledge or opinions that aren't supported by the user's profile and history.
 """
