@@ -1,25 +1,18 @@
+import json
 import os
 from dataclasses import dataclass
 from typing import Optional
 
-import fire
 from dotenv import load_dotenv
+from hn_core.prompts.prompt import agent_prompt
+from hn_core.simulation.persona import Persona
 from hn_core.utils import utils
 from hn_core.utils.logger import get_logger
+from hn_core.utils.storage import R2Storage
 
 from .agent import Agent
 from .environment import Environment
 from .post import Post
-
-
-
-
-import json
-from hn_core.utils.storage import R2Storage
-from hn_core.prompts.prompt import agent_prompt
-from hn_core.simulation.hn_persona import HNPersona
-
-
 
 logger = get_logger("hn_main")
 
@@ -72,8 +65,12 @@ def run(
     if not os.path.exists(hn_archive_path):
         os.makedirs(hn_archive_path)
         storage = R2Storage()
-        storage.download_file("hn-archive", "users.json", hn_archive_path + "/users.json")
-        storage.download_file("hn-archive", "items.json", hn_archive_path + "/items.json")
+        storage.download_file(
+            "hn-archive", "users.json", hn_archive_path + "/users.json"
+        )
+        storage.download_file(
+            "hn-archive", "items.json", hn_archive_path + "/items.json"
+        )
 
     users = json.load(open(hn_archive_path + "/users.json"))
     items = json.load(open(hn_archive_path + "/items.json"))
@@ -89,7 +86,7 @@ def run(
     logger.info("Generating agents with personas...")
     agents = []
 
-    persona = HNPersona(users, items, agent_prompt)
+    persona = Persona(users, items, agent_prompt)
     for user_id in user_ids:
         prompt = persona.get_prompt(user_id)
         agent = Agent(
@@ -113,13 +110,15 @@ def run(
     environment.run(batch_size=batch_size)
 
     # build simulation result
-    _, post_history = utils.build_simulation_results(environment=environment)
+    actions, post_history = utils.build_simulation_results(environment=environment)
 
     # Save results
     utils.save_simulation_results(environment=environment)
 
-    return post_history[-1]
+    # build agent role
+    roles = [a["actions"]["role"] for a in actions]
+    role_cnt = {}
+    for r in roles:
+        role_cnt[r] = role_cnt.get(r, 0) + 1
 
-
-if __name__ == "__main__":
-    fire.Fire(run)
+    return role_cnt, post_history[-1]

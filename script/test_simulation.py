@@ -8,7 +8,7 @@ post = {
 
 
 if __name__ == "__main__":
-    result = simulation.run(
+    roles, result = simulation.run(
         **post,
         model="gpt-4o-mini",
         num_agents=30,

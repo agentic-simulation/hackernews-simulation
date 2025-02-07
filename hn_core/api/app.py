@@ -13,7 +13,7 @@ app = FastAPI()
 def run(request: PostRequest):
     """endpoint for running simulatio"""
     try:
-        result = simulation.run(
+        profile, result = simulation.run(
             title=request.title,
             url=request.url,
             text=request.text,
@@ -24,7 +24,7 @@ def run(request: PostRequest):
             k=request.param.k,
         )
 
-        return JSONResponse(content=result)
+        return JSONResponse(content={"agent_profile": profile, "result": result})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

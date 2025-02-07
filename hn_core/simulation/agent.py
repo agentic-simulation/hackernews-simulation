@@ -8,7 +8,7 @@ from hn_core.provider.litellm import LLM
 from hn_core.utils.logger import get_logger
 from litellm import RateLimitError
 
-from .model import ResponseModel
+from .model import ActionModel
 from .post import Post
 
 logger = get_logger("hn_agent")
@@ -76,11 +76,15 @@ class Agent:
                             ),
                         }
                     ],
-                    response_format=ResponseModel,
+                    response_format=ActionModel,
                     **self.model_params,
                 )
                 action = json.loads(res.choices[0].message.content)
-                return {"upvote": action["upvote"], "comment": action["comment"]}
+                return {
+                    "upvote": action["upvote"],
+                    "comment": action["comment"],
+                    "role": action["role"],
+                }
             except RateLimitError as e:
                 backoff = min(2**ratelimit_attempt + 40, 60)  # Cap at 60 seconds
                 logger.warning(
@@ -100,6 +104,7 @@ class Agent:
         return {
             "upvote": False,
             "comment": None,
+            "role": None,
         }
 
     def run(self, post: Post) -> Dict:
