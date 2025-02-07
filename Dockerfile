@@ -1,23 +1,30 @@
-FROM python:3.10
+FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install curl and clean up
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    build-essential \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Install poetry
 RUN curl -sSL https://install.python-poetry.org | python3 - && \
     ln -s /root/.local/bin/poetry /usr/local/bin/poetry
 
+# Copy dependency files
 COPY pyproject.toml poetry.lock ./
+
+# Configure poetry and install dependencies
+RUN poetry config virtualenvs.create false --local && \
+    poetry install --only main --no-root && \
+    rm -rf /root/.cache/pip /root/.cache/poetry
+
+# Copy application code
 COPY hn_core/ ./hn_core/
 COPY data/ ./data/
 
-RUN poetry config virtualenvs.create false --local
-RUN poetry install --only main --no-root
-
 EXPOSE 8000
 
+# Use poetry run to ensure all dependencies are in the PATH
 CMD ["poetry", "run", "uvicorn", "hn_core.api.app:app", "--host", "0.0.0.0", "--port", "8000"]

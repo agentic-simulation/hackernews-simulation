@@ -6,7 +6,11 @@ from typing import Optional
 
 from dotenv import load_dotenv
 from hn_core.prompts.prompt import agent_prompt
+<<<<<<< HEAD
 from hn_core.simulation.persona import Persona
+=======
+from hn_core.simulation.hn_persona import HNPersona
+>>>>>>> 2b49455 (feat: build and deploy to DO)
 from hn_core.utils import utils
 from hn_core.utils.logger import get_logger
 from hn_core.utils.storage import R2Storage
