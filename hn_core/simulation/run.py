@@ -1,5 +1,6 @@
 import json
 import os
+from collections import defaultdict
 from dataclasses import dataclass
 from typing import Optional
 
@@ -111,14 +112,9 @@ def run(
 
     # build simulation result
     actions, post_history = utils.build_simulation_results(environment=environment)
-
     # Save results
     utils.save_simulation_results(environment=environment)
-
     # build agent role
-    roles = [a["actions"]["role"] for a in actions]
-    role_cnt = {}
-    for r in roles:
-        role_cnt[r] = role_cnt.get(r, 0) + 1
+    agent_profile = utils.build_agent_profile(actions=actions)
 
-    return role_cnt, post_history[-1]
+    return agent_profile, post_history[-1]

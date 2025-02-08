@@ -1,7 +1,8 @@
 import datetime
 import json
 import os
-from typing import List
+from collections import defaultdict
+from typing import Dict, List
 
 from hn_core.simulation.environment import Environment
 
@@ -120,3 +121,16 @@ def save_simulation_results(environment: Environment):
     post_filepath = os.path.join(simulation_dir, "post_history.json")
     with open(post_filepath, "w") as f:
         json.dump(post_history, f, indent=2, default=handler)
+
+
+def build_agent_profile(actions: Dict):
+    agg = defaultdict(lambda: {"upvotes": 0, "comments_count": 0, "comments": []})
+    for action in actions:
+        role = action["actions"]["role"]
+        if action["actions"]["upvote"]:
+            agg[role]["upvotes"] += 1
+        if action["actions"]["comment"]:
+            agg[role]["comments_count"] += 1
+            agg[role]["comments"].append(action["actions"]["comment"])
+
+    return dict(agg)
