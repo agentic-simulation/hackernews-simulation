@@ -43,7 +43,7 @@ class Post:
         state = {
             "sim_step": current_time,
             "upvotes": int(self.upvotes),
-            "comments_count": int(len(self.comments)),
+            "comments_count": len(self.comments),
             "comments": list(self.comments),  # Make a copy to prevent mutation
             "score": float(self.score),  # Ensure score is stored as float
         }
@@ -57,8 +57,7 @@ class Post:
         if not self.url:
             modifier *= 0.4
 
-        # NOTE: definition of lightweight is not clear
-        # excluding from penalty until further investigation
+        ## lightweight penalty definition not clear
         # if not self.text:
         #     modifier *= 0.17
 
@@ -102,9 +101,11 @@ class Post:
         M = Various penalty factor
 
         """
-        # controversial penalty. this needs to be calculated at every timestep because the values change.
+        # controversial penalty.
+        # this needs to be calculated at every timestep because the values change.
+
         if len(self.comments) > 40 and self.upvotes < len(self.comments):
-            penalty *= (self.upvotes / len(self.comments)) ** 3
+            penalty *= (self.upvotes / self.comments) ** 3
 
         points = self.upvotes
         time_since_posted = current_time
@@ -127,8 +128,6 @@ class Post:
 
         # Check for comment action
         comment_text = action.get("comment")
-        # TODO Comments could eventually have nested comments, so we will need to handle that
-        # TODO Comments could also have a score/rank, so we will need to handle that
         if comment_text:
             self.comments.append(comment_text)
 
