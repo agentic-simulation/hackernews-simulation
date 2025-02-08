@@ -105,7 +105,7 @@ class Post:
         # this needs to be calculated at every timestep because the values change.
 
         if len(self.comments) > 40 and self.upvotes < len(self.comments):
-            penalty *= (self.upvotes / self.comments) ** 3
+            penalty *= (self.upvotes / len(self.comments)) ** 3
 
         points = self.upvotes
         time_since_posted = current_time
