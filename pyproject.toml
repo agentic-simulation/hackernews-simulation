@@ -12,10 +12,10 @@ dependencies = [
     "python-dotenv (>=1.0.1,<2.0.0)",
     "openai (>=1.60.1,<2.0.0)",
     "boto3 (>=1.36.9,<2.0.0)",
-    "huggingface-hub (>=0.28.1,<0.29.0)",
     "markdownify (>=0.14.1,<0.15.0)",
     "fastapi (>=0.115.8,<0.116.0)",
-    "uvicorn (>=0.27.1,<0.28.0)"
+    "uvicorn (>=0.27.1,<0.28.0)",
+    "pydantic (>=2.10.6,<3.0.0)"
 ]
 
 [build-system]
@@ -28,3 +28,4 @@ pytest-cov = "^6.0.0"
 optuna = "^4.2.0"
 selenium = "^4.28.1"
 webdriver-manager = "^4.0.2"
+huggingface-hub = "^0.28.1"

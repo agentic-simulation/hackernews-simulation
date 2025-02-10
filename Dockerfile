@@ -27,4 +27,4 @@ COPY data/ ./data/
 EXPOSE 8000
 
 # Use poetry run to ensure all dependencies are in the PATH
-CMD ["poetry", "run", "uvicorn", "hn_core.api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "hn_core.api.app:app", "--host", "0.0.0.0", "--port", "8000"]

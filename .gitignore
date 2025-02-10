@@ -41,4 +41,5 @@ hn_core/results/*
 !hn_core/results/.gitkeep
 
 # hn_archive
-hn_archive/
+data/*
+!data/.gitkeep
