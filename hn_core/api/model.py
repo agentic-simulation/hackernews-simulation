@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 
 class SimulationRequest(BaseModel):
-    model: str
+    model: str = "gpt-4o-mini"
     num_agents: Optional[int] = None
     total_time_steps: Optional[int] = 24
     batch_size: Optional[int] = 10
