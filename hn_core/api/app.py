@@ -11,7 +11,7 @@ app = FastAPI()
 
 @app.post("/run")
 def run(request: PostRequest):
-    """endpoint for running simulatio"""
+    """endpoint for running simulation"""
     try:
         profile, result = simulation.run(
             title=request.title,
