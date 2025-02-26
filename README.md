@@ -1,4 +1,4 @@
-# HackerNews Simulation: An Agent-Based Approach to Digital Community Modeling
+# HackerNews Simulation
 
 This project presents a framework for using AI agents in simulating social media - HackerNews.
 
