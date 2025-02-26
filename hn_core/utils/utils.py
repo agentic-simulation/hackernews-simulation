@@ -98,3 +98,73 @@ def build_agent_profile(actions: Dict):
             agg[role]["comments"].append(action["actions"]["comment"])
 
     return dict(agg)
+
+
+def truncate_items_json(input_file, output_file, num_records=1000):
+    try:
+        with open(input_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        truncated_data = {}
+        record_count = 0
+
+        for record_id, record_data in data.items():
+            if record_count < num_records:
+                truncated_data[record_id] = record_data
+                record_count += 1
+            else:
+                break  # Stop after reaching num_records
+
+        with open(output_file, "w", encoding="utf-8") as f:
+            json.dump(truncated_data, f, indent=2, ensure_ascii=False)
+
+        print(f"Successfully wrote {record_count} records to {output_file}")
+
+    except FileNotFoundError:
+        print(f"Error: Input file '{input_file}' not found.")
+    except json.JSONDecodeError:
+        print(f"Error: Invalid JSON format in '{input_file}'.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+
+def truncate_users_json(input_file, output_file, num_users=1000):
+    try:
+        with open(input_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        truncated_data = {}
+        user_count = 0
+
+        for user_id, user_data in data.items():
+            if user_count < num_users:
+                truncated_data[user_id] = user_data
+                user_count += 1
+            else:
+                break
+
+        with open(output_file, "w", encoding="utf-8") as f:
+            json.dump(truncated_data, f, indent=2, ensure_ascii=False)
+
+        print(f"Successfully wrote {user_count} user records to {output_file}")
+
+    except FileNotFoundError:
+        print(f"Error: Input file '{input_file}' not found.")
+    except json.JSONDecodeError as e:
+        print(f"Error: Invalid JSON format in '{input_file}'. : {str(e)}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+
+if __name__ == "__main__":
+    truncate_items_json(
+        input_file="../../data/items.json",
+        output_file="../../data/items_trunc.json",
+        num_records=1000,
+    )
+
+    truncate_users_json(
+        input_file="../../data/users.json",
+        output_file="../../data/users_trunc.json",
+        num_users=1000,
+    )

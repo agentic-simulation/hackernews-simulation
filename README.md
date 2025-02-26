@@ -2,7 +2,7 @@
 
 This project presents a framework for using AI agents in simulating social media - HackerNews.
 
-## Architectural Framework
+## Architecture Overview
 
 ### Environment
 
@@ -21,15 +21,18 @@ The agent is designed to emulate authentic user interaction patterns based on ac
 
 <img src="./assets/agent.png" width="600" height="500">
 
-## Implementation Protocol
+## Dataset
+We use HackerNew's official API to gather user's real world activity data. Due to storage limit, datasets in this repo are truncated to first 1000 records. Full dataset is [available here](https://huggingface.co/datasets/dannylee1020/hackernews-simulation)
+
+## Installation
 
 Install requisite dependencies utilizing Poetry package management: `poetry install`
 
-## Execution Procedure
+## How to run
 
 Execute `sh run.sh` from the root directory and access the visualization interface at `http://localhost:8501/`
 
-## Bibliographic References
+## References
 
 - [OASIS: Open Agent Social Interaction Simulations with One Million Agents](https://arxiv.org/abs/2411.11581)
 - [Scaling Synthetic Data Creation with 1,000,000,000 Personas](https://arxiv.org/abs/2406.20094)

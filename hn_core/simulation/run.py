@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from dotenv import load_dotenv
+
 from hn_core.prompts.prompt import agent_prompt
 from hn_core.simulation.persona import Persona
 from hn_core.utils import utils
@@ -61,8 +62,8 @@ def run(
     hn_archive_path = os.path.join(
         os.path.dirname(os.path.dirname(__file__)), "..", "data/"
     )
-    users = json.load(open(hn_archive_path + "/users.json"))
-    items = json.load(open(hn_archive_path + "/items.json"))
+    users = json.load(open(hn_archive_path + "/users_trunc.json"))
+    items = json.load(open(hn_archive_path + "/items_trunc.json"))
 
     user_ids = list(users.keys())
     if num_agents is not None:
