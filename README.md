@@ -1,22 +1,35 @@
-# Overview
-Core infrastructure for agentic simulation.
+# HackerNews Simulation: An Agent-Based Approach to Digital Community Modeling
 
-- Set up dependencies: `poetry install`
+This project presents a framework for using AI agents in simulating social media - HackerNews.
 
-## How to run simulation
-From the root directory: `sh script/run.sh`. To change parameters, update `script/test_simulation.py` file.
+## Architectural Framework
 
+### Environment
 
-## How to run hyperparameter search
-Run: `python eval/hyperparam_search.py --model <provider/model> --n-trials 10 --personas-path <path/to/personas.json>`
+The environmentfunctions as the orchestrator, coordinating all components within the simulation system. To accurately represent temporal dynamics inherent in real-world systems, we have implemented discrete timestep progression.
 
-### Command Line Arguments
-Required:
-- `--model`: The LLM model to use (follows LiteLLM naming convention, e.g. 'anthropic/claude-3-sonnet')
+For each temporal iteration:
+- Agent activation is determined by a probabilistic activation function
+- Activated agents execute behavioral protocols
+- All agent-environment interactions are recorded and system state is updated accordingly
 
-Optional:
-- `--n-trials`: Number of trials to run (default: 10)
-- `--personas-path`: Path to the personas file (default: `personas_data/500_v1.jsonl`)
+<img src="./assets/environment.png" width="600" height="500">
 
-## Note
-- Model name follows `LiteLLM` convention.
+### Agent
+
+The agent is designed to emulate authentic user interaction patterns based on activity data. The activation function incorporates multiple parameters including post score and temporal variables to determine agent participation probability.
+
+<img src="./assets/agent.png" width="600" height="500">
+
+## Implementation Protocol
+
+Install requisite dependencies utilizing Poetry package management: `poetry install`
+
+## Execution Procedure
+
+Execute `sh run.sh` from the root directory and access the visualization interface at `http://localhost:8501/`
+
+## Bibliographic References
+
+- [OASIS: Open Agent Social Interaction Simulations with One Million Agents](https://arxiv.org/abs/2411.11581)
+- [Scaling Synthetic Data Creation with 1,000,000,000 Personas](https://arxiv.org/abs/2406.20094)
