@@ -38,8 +38,15 @@ Some challenges we faced from building the simulations are:
 Install requisite dependencies utilizing Poetry package management: `poetry install`
 
 ## How to run
+Set OpenAI api key first:
 
-Execute `sh run.sh` from the root directory and access the visualization interface at `http://localhost:8501/`
+`export OPENAI_API_KEY=<your-openai-api-key>`
+
+Then run:
+
+`sh run.sh`
+
+from the root directory and access the visualization interface at `http://localhost:8501/`
 
 ## References
 
