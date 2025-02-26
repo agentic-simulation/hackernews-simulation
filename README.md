@@ -6,7 +6,7 @@ This project presents a framework for using AI agents in simulating social media
 
 ### Environment
 
-The environmentfunctions as the orchestrator, coordinating all components within the simulation system. To accurately represent temporal dynamics inherent in real-world systems, we have implemented discrete timestep progression.
+The environment functions as the orchestrator, coordinating all components within the simulation system. To accurately represent temporal dynamics inherent in real-world systems, we have implemented discrete timestep progression.
 
 For each temporal iteration:
 - Agent activation is determined by a probabilistic activation function
@@ -23,6 +23,15 @@ The agent is designed to emulate authentic user interaction patterns based on ac
 
 ## Dataset
 We use HackerNew's official API to gather user's real world activity data. Due to storage limit, datasets in this repo are truncated to first 1000 records. Full dataset is [available here](https://huggingface.co/datasets/dannylee1020/hackernews-simulation)
+
+## Limitations
+Some challenges we faced from building the simulations are:
+- The simulation simplifies agent behavior compared to real HackerNews users
+- Limited dataset size may not fully represent the diversity of real-world interactions
+- Computational constraints restrict the scale and complexity of simulations
+- Temporal dynamics may not capture long-term trends and evolving user behaviors
+- Some social dynamics present in real platforms (like group formation) are not modeled
+- Ranking algorithm we designed may not accurately reflect how HackerNews ranks the posts.
 
 ## Installation
 

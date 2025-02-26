@@ -2,6 +2,7 @@ import os
 import sys
 
 import streamlit as st
+
 from hn_core.simulation.run import run
 
 
@@ -21,7 +22,7 @@ def main():
     num_agents = st.sidebar.number_input(
         "Number of Agents",
         min_value=1,
-        value=None,
+        value=500,
         help="The number of agents that will participate in the simulation. Each agent represents a unique user with their own behavior patterns.",
     )
     total_time_steps = st.sidebar.number_input(
