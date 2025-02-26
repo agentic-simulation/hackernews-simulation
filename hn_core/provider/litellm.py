@@ -1,7 +1,8 @@
 from typing import List, Optional
 
-from litellm import completion
 from pydantic import BaseModel
+
+from litellm import completion
 
 
 class LLM:

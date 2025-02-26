@@ -49,7 +49,7 @@ Instructions:
    - Upvote if the post is related to the user's interests and role.
    - Comment only if the post is strongly related to the user's interests and role.
    - It is okay to upvote and comment on the same post.
-   - Be extremely conservative and critical in deciding the actions.
+   - Be critical in deciding the actions.
 
 4. Before deciding to upvote or comment, analyze the post and the user's profile and history in `thoughts`.
 

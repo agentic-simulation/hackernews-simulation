@@ -6,42 +6,6 @@ from typing import Dict, List
 
 from hn_core.simulation.environment import Environment
 
-from .storage import R2Storage
-
-
-def load_personas(bucket: str, key: str, filepath: str):
-    "load personas from R2 storage bucket"
-    personas = []
-    try:
-        r2 = R2Storage()
-        r2.get_object(bucket=bucket, key=key, filename=filepath)
-
-        if not os.path.exists(filepath):
-            raise FileNotFoundError(f"Personas file not found: {filepath}")
-
-        with open(filepath, "r") as f:
-            for line_num, line in enumerate(f, 1):
-                line = line.strip()
-                if not line:
-                    continue
-
-                try:
-                    persona = json.loads(line)
-                    personas.append(persona)
-                except json.JSONDecodeError as e:
-                    print(
-                        f"Skipping invalid JSON on line {line_num}: {line!r}\n"
-                        f"Error: {str(e)}"
-                    )
-        if not personas:
-            raise ValueError(f"No valid personas found in file: {filepath}")
-
-        return personas
-
-    except Exception as e:
-        print(f"Failed to load personas from {filepath}: {str(e)}")
-        raise
-
 
 def handler(obj):
     """convert objects compatible with json"""
@@ -101,7 +65,7 @@ def save_simulation_results(environment: Environment):
             - Metadata (title, URL, text)
             - Performance metrics per simulation step (upvotes, comments, score)
     """
-    results_dir = "./results"
+    results_dir = "hn_core/results"
     os.makedirs(results_dir, exist_ok=True)
 
     timestamp_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")

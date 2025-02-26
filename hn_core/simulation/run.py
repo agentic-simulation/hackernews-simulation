@@ -9,7 +9,6 @@ from hn_core.prompts.prompt import agent_prompt
 from hn_core.simulation.persona import Persona
 from hn_core.utils import utils
 from hn_core.utils.logger import get_logger
-from hn_core.utils.storage import R2Storage
 
 from .agent import Agent
 from .environment import Environment
@@ -59,20 +58,9 @@ def run(
 
     # Load personas
     logger.info(f"Loading personas...")
-    # if hn_archive does not exist locally then download it from R2
     hn_archive_path = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)), "..", "data/hn_archive"
+        os.path.dirname(os.path.dirname(__file__)), "..", "data/"
     )
-    if not os.path.exists(hn_archive_path):
-        os.makedirs(hn_archive_path)
-        storage = R2Storage()
-        storage.download_file(
-            "hn-archive", "users.json", hn_archive_path + "/users.json"
-        )
-        storage.download_file(
-            "hn-archive", "items.json", hn_archive_path + "/items.json"
-        )
-
     users = json.load(open(hn_archive_path + "/users.json"))
     items = json.load(open(hn_archive_path + "/items.json"))
 
@@ -112,8 +100,6 @@ def run(
 
     # build simulation result
     actions, post_history = utils.build_simulation_results(environment=environment)
-    # Save results
-    utils.save_simulation_results(environment=environment)
     # build agent role
     agent_profile = utils.build_agent_profile(actions=actions)
 

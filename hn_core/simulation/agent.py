@@ -3,7 +3,6 @@ import time
 from typing import Dict, Optional
 
 from hn_core.prompts import prompt
-from hn_core.provider.huggingface import HuggingFace
 from hn_core.provider.litellm import LLM
 from hn_core.utils.logger import get_logger
 from litellm import RateLimitError
@@ -38,12 +37,7 @@ class Agent:
         self.model = model
         self.model_params = model_params
         self.is_active = True
-
-        # initialize provider
-        if provider == "huggingface":
-            self.llm = HuggingFace()
-        else:
-            self.llm = LLM()
+        self.llm = LLM()
 
     def _get_agent_response(self, post: Post) -> Dict:
         """Generate agent response based on persona and post content"""
