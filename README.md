@@ -2,6 +2,11 @@
 
 This project presents a framework for using AI agents in simulating social media - HackerNews.
 
+## Authors
+- [dannylee1020](https://github.com/dannylee1020)
+- [gabriansa](https://github.com/gabriansa)
+- [kingjulio8238](https://github.com/kingjulio8238)
+
 ## Architecture Overview
 
 ### Environment
